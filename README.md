@@ -92,8 +92,8 @@ household and the combination of attributes also informed
 after the token : in the context of the predicate .
 
 Using this practice , combined with the use of dynamic typing
-estinguimos once the need for models for data transport in
-specific scenarios , the famous value objects or DTO ( including support for JSON )
+eliminate the need for models for data transport in specific scenarios, 
+the famous value objects or DTO (including support for JSON).
 
 
 /*
@@ -104,10 +104,10 @@ Syntax Ref.:
 Predicate
 ---------
  9  = Binary combination representing the selected attributes [Numeric]
- >  = Start Navigation in Tree of aggregate objects [ Character ]
- 2  = Ordinal position of the aggregate [ Numeric ]
- :  = Token defining action ' get ' [ Character ]
- 16 = Binary combination representing the selected attributes of the aggregate [ Numeric ]
+ >  = Start Navigation in Tree of aggregate objects [Character]
+ 2  = Ordinal position of the aggregate [Numeric]
+ :  = Token defining action ' get ' [Character]
+ 16 = Binary combination representing the selected attributes of the aggregate [Numeric]
 
 Criteria
 ---------
