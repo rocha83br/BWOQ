@@ -1,3 +1,19 @@
+
+           .---.     .---.
+          ( -o- )---( -o- )
+          ;-...-`   `-...-;
+         /                 \
+        /                   \
+       | /_               _\ |
+       \`'.`'"--.....--"'`.'`/
+        \  '.   `._.`   .'  /
+     _.-''.  `-.,___,.-`  .''-._
+    `--._  `'-._______.-'`  _.--`
+      /                 \
+        /.-'`\   .'.   /`'-.\
+       `      '.'   '.' 
+
+
 Hi Contributors,
 
 The initial idea was to create something similar to Dynamic LINQ
@@ -63,21 +79,20 @@ decimal 9 that will be used in the query expression, eg :
 
 /*
 
-static void Main ( string [ ] args )
+public static void Main(string[] args)
 {
+	var personList = new List<object>();
+           
+        personList.Add(new { Id = 1, CreationDate = new DateTime(2013, 12, 25), DocId = "44.762.881-50", Name = "Carlos de Andrade", Size = 1.8, Height = 70, Genre = 1, Address = "Loreto Avenue", Active = true });
+        personList.Add(new { Id = 2, CreationDate = new DateTime(2014, 01, 26), DocId = "19.333.121-X", Name = "Laura Carvalho", Size = 1.73, Height = 62, Genre = 2, Address = "Alcapone Street", Active = false });
+        personList.Add(new { Id = 3, CreationDate = new DateTime(2014, 01, 22), DocId = "16.555.132-X", Name = "João Augusto", Size = 1.90, Height = 86, Genre = 1, Address = "Sunshine Street", Active = true });
+        personList.Add(new { Id = 4, CreationDate = new DateTime(2014, 01, 10), DocId = "28.262.165-X", Name = "Julia dos Santos", Size = 1.60, Height = 55, Genre = 2, Address = "Matarazzo Street", Active = true });
+        personList.Add(new { Id = 5, CreationDate = new DateTime(2014, 01, 10), DocId = "28.262.110-X", Name = "Clara dos Santos", Size = 1.63, Height = 57, Genre = 2, Address = "Matarazzo Street", Active = true });
 
-   var personList = new List<object>();
-           
-        personList.Add( new { Id = 1 , CreationDate = new DateTime (2013 , 12 , 25 ) , DocId = " 44762881-50 " , Name = " Carlos de Andrade " , Size = 1.8 , Height = 70 Genre = 1 , Address = " Loreto Avenue " , Active = true });
-        personList.Add( new { Id = 2 , CreationDate = new DateTime ( 2014 , 01 , 26 ) , DocId = " 19333121 -X" , Name = " Laura Carvalho ," Size = 1.73 , Height = 62 , = 2 Genre , Address = " Alcapone Street " , Active = false});
-        personList.Add( new { Id = 3 , CreationDate = new DateTime ( 2014 , 01 , 22 ) , DocId = " 16555132 -X" , Name = " John Augustus " Size = 1.90 , Height = 86 Genre = 1 , Address = " Sunshine Street " , Active = true });
-        personList.Add( new { Id = 4 , CreationDate = new DateTime ( 2014 , 01 , 10 ) , DocId = " 28262165 -X" , Name = " Julia Santos " Size = 1.60 , Height = 55 , = Genre 2 , Address = " Matarazzo Street " , Active = true });
-        personList.Add( new { Id = 5 , CreationDate = new DateTime ( 2014 , 01 , 10 ) , DocId = " 28262110 -X" , Name = " Light of the Saints," Size = 1.63 , Height = 57 Genre = 2 , Address = " Matarazzo Street " , Active = true });
+ 	var bwq = new BitWiseQuery<object>(personList);
 
-        var = new bwq BitWiseQuery<object>(personList);
-
-        var = objList bwq.Query("9>2:16").Where("128:1&=");
-    }
+ 	var objList = bwq.Query("9>2:16").Where("128:1&=");
+}
 
 */
 
@@ -198,7 +213,8 @@ Isto, unido ao conceito de representação pós-fixa das operações,
 
 /*
 
-static void Main(string[] args)
+
+public static void Main(string[] args)
 {
 	var personList = new List<object>();
            
@@ -208,10 +224,11 @@ static void Main(string[] args)
         personList.Add(new { Id = 4, CreationDate = new DateTime(2014, 01, 10), DocId = "28.262.165-X", Name = "Julia dos Santos", Size = 1.60, Height = 55, Genre = 2, Address = "Matarazzo Street", Active = true });
         personList.Add(new { Id = 5, CreationDate = new DateTime(2014, 01, 10), DocId = "28.262.110-X", Name = "Clara dos Santos", Size = 1.63, Height = 57, Genre = 2, Address = "Matarazzo Street", Active = true });
 
-        var bwq = new BitWiseQuery<object>(personList);
+ 	var bwq = new BitWiseQuery<object>(personList);
 
-        var objList = bwq.Query("9>2:16").Where("128:1&=");
+ 	var objList = bwq.Query("9>2:16").Where("128:1&=");
 }
+
 
 */
 
