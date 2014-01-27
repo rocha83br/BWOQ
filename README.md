@@ -1,4 +1,3 @@
-
 Hi Contributors,
 
 The initial idea was to create something similar to Dynamic LINQ
@@ -60,7 +59,8 @@ of active users, we generate the table [1,2,4,8,16,32,64,128], once we have
 the combination bound to represent the 3 columns for logical or [1,8] giving
 decimal 9 that will be used in the query expression, eg :
 
-#
+
+/*
 
 static void Main ( string [ ] args )
 {
@@ -78,7 +78,7 @@ static void Main ( string [ ] args )
         var = objList bwq.Query("9>2:16").Where("128:1&=");
     }
 
-#
+*/
 
 
 where the operator & indicates the use of the conjunction predicate ,
@@ -95,7 +95,7 @@ estinguimos once the need for models for data transport in
 specific scenarios , the famous value objects or DTO ( including support for JSON )
 
 
-#
+/*
 
 Syntax Ref.:
 =============
@@ -118,7 +118,7 @@ Criteria
 =   = Define equality as comparison of values and criteria [Char]
       ( By default the library considers the similarity 'like sentence'
 
-#
+*/
 
 
 My thanks to my wonderful wife, my Puppy
@@ -195,7 +195,7 @@ Isto, unido ao conceito de representação pós-fixa das operações,
 (Notação polonesa inversa de  Charles Hamblin em 1950).
 
 
-#
+/*
 
 static void Main(string[] args)
 {
@@ -212,7 +212,7 @@ static void Main(string[] args)
         var objList = bwq.Query("9>2:16").Where("128:1&=");
 }
 
-#
+*/
 
 
 onde o operador & indica o uso de conjunção dos predicados,
@@ -229,7 +229,7 @@ estinguimos de vez a necessidade de modelos para transporte de dados em
 cenários específicos, os famosos value objects ou DTO (incluindo suporte a JSON)
 
 
-#
+/*
 
 Ref. Sintaxe:
 =============
@@ -252,7 +252,7 @@ Critérios
 =   = Token definido a igualdade como comparação dos valores e critérios [Caracter]
       (Por padrão a biblioteca considera a semelhança 'sentença like'
 
-#
+*/
 
 
 Agradeço a minha maravilhosa esposa, Filhote 
