@@ -6,7 +6,7 @@ based on class CSharpCodeProvider / CompileAssemblyFromSource ,
 executing methods containing LINQ queries generated at runtime
 as a contribution to this solution based on logical comparison .
 
-As our colleagues notorious Microsoft ever thought this idea,
+As our notorious colleagues on Microsoft ever thought this idea,
 we extend ourselves from it !
 
 BWOQ (BitWise Object Query)
@@ -20,38 +20,39 @@ We can make comparisons using logical disjunction recursively for
 these attributes, both as predicates, such as the lambda search criteria.
 
 This, together with the concept of postfix representation of the operations,
-(Reverse Polish Notation Charles Hamblin in 1950) .
+(Reverse Polish Notation Charles Hamblin in 1950).
 
-scenario :
+Scenario :
 
-class Person
-    Id
-    CreationDate
-    DocId
-    Name
-    Size
-    Height
-    Genre
-    Active
-    Credential
-        Id
-        TokenID
-        Password
-    List of Address
-        Id
-        Street
-        Number
-        District
-        City
-        State
-        ZipCode
-        Lat
-        Lng
-    List of Contact
-        Id
-        TypeId : Enum of [ telphone , Email , InstantMessenger , SocialNetwork ]
-        Name
-        Description
+
+	Class Person
+		Id
+		CreationDate
+		DocId
+		Name
+		Size
+		Height
+		Genre
+		Active
+		Credential
+			Id
+			TokenId
+			Password
+		List of Address
+			Id
+			Street
+			Number
+			District
+			City
+			State
+			ZipCode
+			Lat
+			Lng
+		List of Contact
+			Id
+			TypeId : Enum of [TelPhone, Email, InstantMessenger, SocialNetwork]
+			Name
+			Description
 
 
 I need to populate a visual interface with Id , Name and City attributes only
@@ -65,7 +66,7 @@ decimal 9 that will be used in the query expression, eg :
 static void Main ( string [ ] args )
 {
 
-    var personList = new List<object>();
+   var personList = new List<object>();
            
         personList.Add( new { Id = 1 , CreationDate = new DateTime (2013 , 12 , 25 ) , DocId = " 44762881-50 " , Name = " Carlos de Andrade " , Size = 1.8 , Height = 70 Genre = 1 , Address = " Loreto Avenue " , Active = true });
         personList.Add( new { Id = 2 , CreationDate = new DateTime ( 2014 , 01 , 26 ) , DocId = " 19333121 -X" , Name = " Laura Carvalho ," Size = 1.73 , Height = 62 , = 2 Genre , Address = " Alcapone Street " , Active = false});
@@ -102,11 +103,11 @@ Syntax Ref.:
 
 Predicate
 ---------
-9  = Binary combination representing the selected attributes [ Numeric ]
->  = Start Navigation in Tree of aggregate objects [ Character ]
-2  = Ordinal position of the aggregate [ Numeric ]
-:  = Token defining action ' get ' [ Character ]
-16 = Binary combination representing the selected attributes of the aggregate [ Numeric ]
+ 9  = Binary combination representing the selected attributes [Numeric]
+ >  = Start Navigation in Tree of aggregate objects [ Character ]
+ 2  = Ordinal position of the aggregate [ Numeric ]
+ :  = Token defining action ' get ' [ Character ]
+ 16 = Binary combination representing the selected attributes of the aggregate [ Numeric ]
 
 Criteria
 ---------
