@@ -20,13 +20,13 @@ namespace System.Linq.Dynamic.BitWise
 
         #region Constructors
 
-        public BitWiseQuery(IQueryable<object> objRef)
+        public BitWiseQuery(IQueryable<dynamic> objRef)
         {
             if (objRef != null)
                 objInstance = (IQueryable<T>)objRef;
         }
 
-        public BitWiseQuery(IQueryable<object> objRef, string extExpr)
+        public BitWiseQuery(IQueryable<dynamic> objRef, string extExpr)
         {
             if (objRef != null)
                 objInstance = (IQueryable<T>)objRef;
@@ -44,7 +44,7 @@ namespace System.Linq.Dynamic.BitWise
         private static PropertyInfo[] listObjProp(IQueryable<T> obj)
         {
             if ((_objProp == null) || (_objProp.Length == 0))
-                _objProp = obj.GetType().GetProperties();
+                _objProp = obj.First().GetType().GetProperties();
 
             return _objProp;
         }
@@ -59,17 +59,26 @@ namespace System.Linq.Dynamic.BitWise
                                .ToList();
         }
 
-        private object[] getObjPropCombin(IList binTable, int binValue, IQueryable<T> obj, bool extrVal)
+        private string[] getObjPropCombin(IList binTable, int binValue, IQueryable<T> obj)
         {
             int idx = 0;
             var cnvBinTable = (List<KeyValuePair<int, int>>)binTable;
 
             return (from prp in listObjProp(obj)
                     where (cnvBinTable[idx++].Value
-                           | binValue) == binValue 
-                    select !extrVal ? 
-                            prp.Name : 
-                            prp.GetValue(obj, null)).ToArray();
+                           | binValue) == binValue
+                    select prp.Name).ToArray();
+        }
+
+        private T[] getObjValCombin(IList binTable, int binValue, IQueryable<T> obj)
+        {
+            int idx = 0;
+            var cnvBinTable = (List<KeyValuePair<int, int>>)binTable;
+
+            return (from prp in listObjProp(obj)
+                    where (cnvBinTable[idx++].Value
+                           | binValue) == binValue
+                    select prp.GetValue(obj.First(), null)).ToArray() as T[];
         }
 
         private bool valExpr(string extExpr)
@@ -89,19 +98,21 @@ namespace System.Linq.Dynamic.BitWise
 
         private string getDynExprLogCompr(string[] objProps, string filterExpr)
         {
-            return string.Join(" ", from prp in objProps
-                                    select string.Concat(prp.Substring(0, prp.Length - 1), " ",
-                                                         prp.Substring(prp.Length - 1).Equals("&&") ?
-                                                         " And " : " Or "));
+            var result = string.Join(" ", from prp in objProps
+                                    select string.Concat(getDynExprEqlt(prp, filterExpr),
+                                                         prp.Contains("&") ? " And " : " Or  "));
+            
+            return result.Substring(0, (result.Length - 5));
         }
 
         private string getDynExprEqlt(string prp, string filterExpr)
         {
             int idx = 0;
 
-            return string.Join(" ", string.Concat(prp.Substring(0, prp.Length - 1), " ",
-                                                  prp.Substring(prp.Length - 1).Equals("&=") ?
-                                                  string.Concat(".Contais(@", idx++, ") ") : " = "));
+            return string.Join(" ", string.Concat(prp, " ",
+                                                  prp.Contains("=") 
+                                                  ? string.Concat(".Contais(@", idx++, ") ") 
+                                                  : string.Concat("= ", "@", idx++)));
         }
 
         #endregion
@@ -127,20 +138,19 @@ namespace System.Linq.Dynamic.BitWise
 
         public IQueryable Where(string extExpr)
         {
-            IQueryable<T> result = null;
+            IQueryable result = null;
 
             if (valExpr(extExpr))
             {
                 var binTable = getPropBinTable(objInstance);
                 var binValue = getPropCombinDec(extExpr);
-                var propNames = getObjPropCombin(binTable, binValue,
-                                                 objInstance, false) as string[];
-                var dynLINQry = string.Concat(getDynExprPredic(propNames),
-                                              getDynExprLogCompr(propNames, extExpr));
+                var propNames = getObjPropCombin(binTable, binValue, objInstance);
+                
+                var dynLINQry = string.Concat(getDynExprLogCompr(propNames, extExpr));
 
-                var dynLINQParams = getObjPropCombin(binTable, binValue, objInstance, true);
+                var dynLINQParams = getObjValCombin(binTable, binValue, objInstance);
 
-                DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams); 
+                result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams); 
             }
             else
                 throw new InvalidExpression();
