@@ -73,22 +73,23 @@ namespace System.Linq.Dynamic.BitWise
         private object[] setObjValCombin(IList binTable, int binValue, IQueryable<T> obj, string criteria)
         {
             int idx = 0;
-            object[] result;
+            object[] result; long numTest; DateTime dateTest;
             var cnvBinTable = (List<KeyValuePair<int, int>>)binTable;
-            long numTest;
             bool numArg = long.TryParse(criteria, out numTest);
+            bool dateArg = DateTime.TryParse(criteria, out dateTest);
 
             result = (from prp in listObjProp(obj)
                       where (cnvBinTable[idx++].Value
                              | binValue) == binValue
                       select prp.GetValue(obj.First(), null)).ToArray();
 
-            for(var cont = 0; cont < result.Length; cont++)
-                if (numArg
-                    || (!numArg && ((result[cont].GetType() == typeof(string))
-                                || (result[cont].GetType() == typeof(DateTime)))))
+            for (var cont = 0; cont < result.Length; cont++)
+                if (numArg || (!numArg && (result[cont].GetType() == typeof(string))))
                     result[cont] = criteria as object;
-
+                else if (result[cont].GetType() == typeof(DateTime))
+                    result[cont] = dateArg ? dateTest as object
+                                           : DateTime.MinValue;
+            
             return result;
         }
 
@@ -104,7 +105,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private int getPropCombinDec(string extExpr)
         {
-            return int.Parse(new Regex(@"([a-zA-Z]|>|:|&|=| )").Replace(extExpr, string.Empty));
+            return int.Parse(extExpr.Substring(0, extExpr.IndexOf(':')));
         }
 
         private string getDynExprCriter(string extExpr)
@@ -114,21 +115,21 @@ namespace System.Linq.Dynamic.BitWise
 
         private string getDynExprLogCompr(string[] objProps, string filterExpr)
         {
+            int idx = 0;
+
             var result = string.Join(" ", from prp in objProps
-                                    select string.Concat(getDynExprEqlt(prp, filterExpr),
+                                    select string.Concat(getDynExprEqlt(prp, filterExpr, idx++),
                                                          filterExpr.Contains("&") ? " And " : " Or  "));
             
             return result.Substring(0, (result.Length - 5));
         }
 
-        private string getDynExprEqlt(string prp, string filterExpr)
+        private string getDynExprEqlt(string prp, string filterExpr, int idx)
         {
-            int idx = 0;
-
             return string.Join(" ", string.Concat(prp, 
                                                   filterExpr.Contains("=") 
-                                                  ? string.Concat(" = ", "@", idx++) 
-                                                  : string.Concat(".Contains(@", idx++, ") ")));
+                                                  ? string.Concat(" = ", "@", idx) 
+                                                  : string.Concat(".Contains(@", idx, ") ")));
         }
 
         #endregion

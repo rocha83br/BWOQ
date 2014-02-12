@@ -33,7 +33,7 @@ namespace BWOQ
            
             var bwq = new BitWiseQuery<Person>(personList.AsQueryable());
 
-            var objList = bwq.Query("9>1:2").Where("128:Loreto&");
+            var objList = bwq.Query("9>1:2").Where("10:26/01/2014=");
         }
     }
 }
