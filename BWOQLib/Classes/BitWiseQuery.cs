@@ -14,7 +14,7 @@ namespace System.Linq.Dynamic.BitWise
         #region Declarations
 
         private IQueryable<T> objInstance { get; set; }
-        private string predicate { get; set; }
+        private string predicExpr { get; set; }
         
         #endregion
 
@@ -32,7 +32,7 @@ namespace System.Linq.Dynamic.BitWise
                 objInstance = (IQueryable<T>)objRef;
             
             if (!string.IsNullOrEmpty(extExpr)) 
-                predicate = extExpr;
+                predicExpr = extExpr;
         }
 
         #endregion
@@ -41,7 +41,7 @@ namespace System.Linq.Dynamic.BitWise
 
         // Faceding Reflection (Performance Aspect)
         private static PropertyInfo[] _objProp;
-        private static PropertyInfo[] listObjProp(IQueryable<T> obj)
+        private static PropertyInfo[] listObjProp(IQueryable<object> obj)
         {
             if ((_objProp == null) || (_objProp.Length == 0))
                 _objProp = obj.First().GetType().GetProperties();
@@ -49,24 +49,22 @@ namespace System.Linq.Dynamic.BitWise
             return _objProp;
         }
 
-        private IList getPropBinTable(IQueryable<T> obj)
+        private IList getPropBinTable(IQueryable<object> obj)
         {
             int idx = 0;
 
             return (from prp in listObjProp(obj)
                     select new KeyValuePair<int, int>
-                               (idx++, (int)Math.Pow(2,idx-1)))
-                               .ToList();
+                               (idx++, (int)Math.Pow(2,idx-1))).ToList();
         }
 
-        private string[] getObjPropCombin(IList binTable, int binValue, IQueryable<T> obj)
+        private string[] getObjPropCombin(IList binTable, int binValue, IQueryable<object> obj)
         {
             int idx = 0;
             var cnvBinTable = (List<KeyValuePair<int, int>>)binTable;
 
             return (from prp in listObjProp(obj)
-                    where (cnvBinTable[idx++].Value
-                           | binValue) == binValue
+                    where (cnvBinTable[idx++].Value | binValue) == binValue
                     select prp.Name).ToArray();
         }
 
@@ -79,8 +77,7 @@ namespace System.Linq.Dynamic.BitWise
             bool dateArg = DateTime.TryParse(criteria, out dateTest);
 
             result = (from prp in listObjProp(obj)
-                      where (cnvBinTable[idx++].Value
-                             | binValue) == binValue
+                      where (cnvBinTable[idx++].Value | binValue) == binValue
                       select prp.GetValue(obj.First(), null)).ToArray();
 
             for (var cont = 0; cont < result.Length; cont++)
@@ -93,9 +90,14 @@ namespace System.Linq.Dynamic.BitWise
             return result;
         }
 
-        private bool valExpr(string extExpr)
+        private bool valCriterExpr(string extExpr)
         {
             return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[a-z0-9](|&|=|&=)$");
+        }
+
+        private bool valPredicExpr(string extExpr)
+        {
+            return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[0-9]$");
         }
 
         private string getDynExprPredic(string[] objProps)
@@ -105,11 +107,25 @@ namespace System.Linq.Dynamic.BitWise
 
         private string getPredicate()
         {
-            var predicProps = getObjPropCombin(getPropBinTable(objInstance), 
-                                               getPredicCombinDec(this.predicate), 
-                                               objInstance);
+            string[] predicProps;
+            string result;
 
-            return string.Concat("new(", string.Join(", ", predicProps), ")");
+            if (valPredicExpr(this.predicExpr))
+            {
+                predicProps = getPredicProps(objInstance);
+                result = string.Concat("new (", string.Join(", ", predicProps), ")");
+            }
+            else
+                throw new InvalidQueryExpression();
+
+            return result;
+        }
+
+        private string[] getPredicProps(IQueryable<object> obj) {
+
+            return getObjPropCombin(getPropBinTable(obj),
+                                    getPredicCombinDec(this.predicExpr),
+                                    obj);
         }
 
         private int getPropCombinDec(string extExpr)
@@ -122,10 +138,21 @@ namespace System.Linq.Dynamic.BitWise
             int result;
 
             if (!int.TryParse(extExpr, out result))
-                if (Regex.IsMatch(extExpr, @"^[0-9*]>[0-9*]:[0-9*]$"))
+                if (Regex.IsMatch(extExpr, @"^[0-9]*>[0-9]*:[0-9]*$"))
                     result = int.Parse(extExpr.Substring(0, extExpr.IndexOf('>')));
 
             return result;
+        }
+
+        private string[] getChildsPredic(int ordinal)
+        {
+            var childRef = new List<object>();
+            var child = objInstance.GetType().GetProperties()
+                                             .Where(cld => cld.GetType().IsClass)
+                                             .ElementAtOrDefault(ordinal);
+            childRef.Add(child);
+
+            return getPredicProps(childRef.AsQueryable());
         }
 
         private string getDynExprCriter(string extExpr)
@@ -177,7 +204,7 @@ namespace System.Linq.Dynamic.BitWise
         {
             IQueryable result = null;
 
-            if (valExpr(extExpr))
+            if (valCriterExpr(extExpr))
             {
                 var binTable = getPropBinTable(objInstance);
                 var binValue = getPropCombinDec(extExpr);
@@ -192,7 +219,7 @@ namespace System.Linq.Dynamic.BitWise
                                          .Select(getPredicate()); 
             }
             else
-                throw new InvalidExpression();
+                throw new InvalidCriteriaExpression();
 
             return result;
         }
