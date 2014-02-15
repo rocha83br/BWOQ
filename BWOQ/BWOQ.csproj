@@ -8,8 +8,8 @@
     <ProjectGuid>{BAE9037B-6E69-4652-9D9C-E0FF97078DF0}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LCOQ</RootNamespace>
-    <AssemblyName>LCOQ</AssemblyName>
+    <RootNamespace>BWOQ</RootNamespace>
+    <AssemblyName>BWOQ</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
