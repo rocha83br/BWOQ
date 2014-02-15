@@ -103,9 +103,29 @@ namespace System.Linq.Dynamic.BitWise
             return string.Join(", ", objProps);
         }
 
+        private string getPredicate()
+        {
+            var predicProps = getObjPropCombin(getPropBinTable(objInstance), 
+                                               getPredicCombinDec(this.predicate), 
+                                               objInstance);
+
+            return string.Concat("new(", string.Join(", ", predicProps), ")");
+        }
+
         private int getPropCombinDec(string extExpr)
         {
             return int.Parse(extExpr.Substring(0, extExpr.IndexOf(':')));
+        }
+
+        private int getPredicCombinDec(string extExpr)
+        {
+            int result;
+
+            if (!int.TryParse(extExpr, out result))
+                if (Regex.IsMatch(extExpr, @"^[0-9*]>[0-9*]:[0-9*]$"))
+                    result = int.Parse(extExpr.Substring(0, extExpr.IndexOf('>')));
+
+            return result;
         }
 
         private string getDynExprCriter(string extExpr)
@@ -168,7 +188,8 @@ namespace System.Linq.Dynamic.BitWise
 
                 var dynLINQParams = setObjValCombin(binTable, binValue, objInstance, dynCriteria);
 
-                result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams); 
+                result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams)
+                                         .Select(getPredicate()); 
             }
             else
                 throw new InvalidExpression();

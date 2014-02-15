@@ -11,7 +11,7 @@ namespace System.Linq.Dynamic.BitWise
         #region Declarations
 
         private static IQueryable<T> objInstance;
-        private string bwqExpression { get; set; }
+        public static string bwqExpression { get; set; }
 
         #endregion
 
@@ -32,7 +32,7 @@ namespace System.Linq.Dynamic.BitWise
 
         public IQueryable Where(string extExpr)
         {
-            return new BitWiseQuery<T>(objInstance).Where(extExpr);
+            return new BitWiseQuery<T>(objInstance, bwqExpression).Where(extExpr);
         }
         public IQueryable OrderBy(string extExpr)
         {
