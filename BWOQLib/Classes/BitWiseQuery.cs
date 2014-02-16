@@ -41,15 +41,18 @@ namespace System.Linq.Dynamic.BitWise
 
         // Faceding Reflection (Performance Aspect)
         private static PropertyInfo[] _objProp;
-        private static PropertyInfo[] listObjProp(IQueryable obj)
+        private static PropertyInfo[] listObjProp(object obj)
         {
             if ((_objProp == null) || (_objProp.Length == 0))
-                _objProp = obj.ElementType.GetProperties();
+                if (!(obj is PropertyInfo))
+                    _objProp = obj.GetType().GetProperties();
+                else
+                    _objProp = ((PropertyInfo)obj).PropertyType.GetProperties();
 
             return _objProp;
         }
 
-        private IList getPropBinTable(IQueryable obj)
+        private IList getPropBinTable(object obj)
         {
             int idx = 0;
 
@@ -58,7 +61,7 @@ namespace System.Linq.Dynamic.BitWise
                                (idx++, (int)Math.Pow(2,idx-1))).ToList();
         }
 
-        private string[] getObjPropCombin(IList binTable, int binValue, IQueryable obj)
+        private string[] getObjPropCombin(IList binTable, int binValue, object obj)
         {
             int idx = 0;
             var cnvBinTable = (List<KeyValuePair<int, int>>)binTable;
@@ -112,12 +115,14 @@ namespace System.Linq.Dynamic.BitWise
 
             if (valPredicExpr(this.predicExpr))
             {
-                predicProps = getPredicProps(objInstance, 
+                predicProps = getPredicProps(objInstance.First(), 
                                              getPredicCombinDec(this.predicExpr));
                 
                 var childExpr = this.predicExpr.Split('>').ToList();
                 childExpr.RemoveAt(0); _objProp = null;
-                Array.Copy(getChildsPredic(childExpr.ToArray()), predicProps, childExpr.Count);
+                var childsPredic = getChildsPredic(childExpr.ToArray());
+                Array.Resize(ref predicProps, (predicProps.Length + childsPredic.Length));
+                childsPredic.CopyTo(predicProps, (predicProps.Length - childsPredic.Length));
                 childExpr = null;
 
                 result = string.Concat("new (", string.Join(", ", predicProps), ")");
@@ -128,12 +133,9 @@ namespace System.Linq.Dynamic.BitWise
             return result;
         }
 
-        private string[] getPredicProps(IQueryable obj, int combinDec) {
+        private string[] getPredicProps(object obj, int combinDec) {
             
             _objProp = null;
-
-            //obj = obj.Cast<objType>();
-
             return getObjPropCombin(getPropBinTable(obj), combinDec, obj);
         }
 
@@ -156,14 +158,16 @@ namespace System.Linq.Dynamic.BitWise
         private string[] getChildsPredic(string[] childExpr)
         {
             string[] result = new string[0];
-            var childRef = new List<object>();
 
             foreach (var cexp in childExpr)
             {
                 var cnvExpr = cexp.Split(':');
-                childRef.Add(getChildObj(int.Parse(cnvExpr[0])));
-                var itemPredic = getPredicProps(childRef.AsQueryable(), int.Parse(cnvExpr[1]));
-                Array.Copy(itemPredic, result, itemPredic.Length);
+                var childObj = getChildObj(int.Parse(cnvExpr[0]));
+                var itemPredic = getPredicProps(childObj, int.Parse(cnvExpr[1]))
+                                 .Select(pdp => string.Concat(((PropertyInfo)childObj).PropertyType.Name, ".", pdp))
+                                 .ToArray();
+                Array.Resize(ref result, (result.Length + itemPredic.Length));
+                itemPredic.CopyTo(result, (result.Length - itemPredic.Length));
             }
 
             _objProp = null;
@@ -178,7 +182,6 @@ namespace System.Linq.Dynamic.BitWise
                                     .Where(cld => cld.PropertyType.Module.Name
                                     .Equals(genInstType.Module.Name))
                                     .ElementAtOrDefault(ordinal - 1);
-
             return result;
         }
 
@@ -233,13 +236,12 @@ namespace System.Linq.Dynamic.BitWise
 
             if (valCriterExpr(extExpr))
             {
-                var binTable = getPropBinTable(objInstance);
+                var binTable = getPropBinTable(objInstance.First());
                 var binValue = getPropCombinDec(extExpr);
-                var propNames = getObjPropCombin(binTable, binValue, objInstance);
+                var propNames = getObjPropCombin(binTable, binValue, objInstance.First());
                 var dynCriteria = getDynExprCriter(extExpr);
 
                 var dynLINQry = string.Concat(getDynExprLogCompr(propNames, extExpr));
-
                 var dynLINQParams = setObjValCombin(binTable, binValue, objInstance, dynCriteria);
 
                 result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams)
