@@ -149,7 +149,7 @@ namespace System.Linq.Dynamic.BitWise
             int result;
 
             if (!int.TryParse(extExpr, out result))
-                if (Regex.IsMatch(extExpr, @"^[0-9]*>[0-9]*:[0-9]*$"))
+                if (Regex.IsMatch(extExpr, @"^[0-9]*>[0-9]*:*[0-9]"))
                     result = int.Parse(extExpr.Substring(0, extExpr.IndexOf('>')));
 
             return result;
@@ -209,6 +209,12 @@ namespace System.Linq.Dynamic.BitWise
                                                   : string.Concat(".Contains(@", idx, ") ")));
         }
 
+        private void checkInvalidCriterAttribs(object[] dynParams, string extExpr)
+        {
+            if (dynParams.Any(prm => prm is DateTime) && !extExpr.Contains("="))
+                throw new InvalidDateTimeCriteria();
+        }
+
         #endregion
 
         #region Public Methods
@@ -243,6 +249,8 @@ namespace System.Linq.Dynamic.BitWise
 
                 var dynLINQry = string.Concat(getDynExprLogCompr(propNames, extExpr));
                 var dynLINQParams = setObjValCombin(binTable, binValue, objInstance, dynCriteria);
+
+                checkInvalidCriterAttribs(dynLINQParams, extExpr);
 
                 result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams)
                                          .Select(getPredicate()); 

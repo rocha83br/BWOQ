@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Classes\BWQFilter.cs" />
     <Compile Include="Classes\BitWiseQuery.cs" />
+    <Compile Include="Classes\CustomExceptions\InvalidDateTimeValue.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidCriteriaExpression.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidQueryExpression.cs" />
     <Compile Include="Interfaces\IBWQEngine.cs" />
