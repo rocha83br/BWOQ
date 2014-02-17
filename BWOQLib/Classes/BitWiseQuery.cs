@@ -71,19 +71,31 @@ namespace System.Linq.Dynamic.BitWise
                     select prp.Name).ToArray();
         }
 
-        private object[] setObjValCombin(IList binTable, int binValue, IQueryable<T> obj, string criteria)
+        private object[] listPropValues(object obj, string[] propNames)
         {
-            int idx = 0;
+            var result = new List<object>();
+            foreach (var prop in obj.GetType().GetProperties()
+                                              .Where(prp => propNames.Contains(prp.Name)))
+                result.Add(prop.GetValue(obj, null));
+
+            foreach (var propName in propNames.Where(prp => prp.Contains('.')))
+            {
+                var childProp = obj.GetType().GetProperty(propName.Split('.')[0]).GetValue(obj, null);
+                result.Add(childProp.GetType().GetProperty(propName.Split('.')[1]).GetValue(childProp, null));
+            }
+
+            return result.ToArray();
+        }
+
+        private object[] setObjValCombin(string[] propNames, object obj, string criteria)
+        {
             object[] result; long numTest; DateTime dateTest;
-            var cnvBinTable = (List<KeyValuePair<int, int>>)binTable;
             bool numArg = long.TryParse(criteria, out numTest);
             bool dateArg = DateTime.TryParse(criteria, out dateTest);
 
-            result = (from prp in listObjProp(obj)
-                      where (cnvBinTable[idx++].Value | binValue) == binValue
-                      select prp.GetValue(obj.First(), null)).ToArray();
+            result = listPropValues(obj, propNames);
 
-            for (var cont = 0; cont < result.Length; cont++)
+            for (var cont = 0; cont < propNames.Length; cont++)
                 if (numArg || (!numArg && (result[cont].GetType() == typeof(string))))
                     result[cont] = criteria as object;
                 else if (result[cont].GetType() == typeof(DateTime))
@@ -139,9 +151,9 @@ namespace System.Linq.Dynamic.BitWise
             return getObjPropCombin(getPropBinTable(obj), combinDec, obj);
         }
 
-        private int getPropCombinDec(string extExpr)
+        private string getCriterPredics(string extExpr)
         {
-            return int.Parse(extExpr.Substring(0, extExpr.IndexOf(':')));
+            return extExpr.Substring(0, extExpr.IndexOf("::"));
         }
 
         private int getPredicCombinDec(string extExpr)
@@ -187,7 +199,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private string getDynExprCriter(string extExpr)
         {
-            return new Regex(@"([0-9]*:|&|=)").Replace(extExpr, string.Empty);
+            return extExpr.Substring(extExpr.IndexOf("::") + 2);
         }
 
         private string getDynExprLogCompr(string[] objProps, string filterExpr)
@@ -211,8 +223,8 @@ namespace System.Linq.Dynamic.BitWise
 
         private void checkInvalidCriterAttribs(object[] dynParams, string extExpr)
         {
-            if (dynParams.Any(prm => prm is DateTime) && !extExpr.Contains("="))
-                throw new InvalidDateTimeCriteria();
+            if (dynParams.Any(prm => prm is DateTime || prm is int) && !extExpr.Contains("="))
+                throw new InvalidCriterAttrib();
         }
 
         #endregion
@@ -243,17 +255,24 @@ namespace System.Linq.Dynamic.BitWise
             if (valCriterExpr(extExpr))
             {
                 var binTable = getPropBinTable(objInstance.First());
-                var binValue = getPropCombinDec(extExpr);
+                var binValue = getPredicCombinDec(getCriterPredics(extExpr));
                 var propNames = getObjPropCombin(binTable, binValue, objInstance.First());
                 var dynCriteria = getDynExprCriter(extExpr);
 
+                var childExpr = getCriterPredics(extExpr).Split('>').ToList();
+                childExpr.RemoveAt(0); _objProp = null;
+                var childsPredic = getChildsPredic(childExpr.ToArray());
+                Array.Resize(ref propNames, (propNames.Length + childsPredic.Length));
+                childsPredic.CopyTo(propNames, (propNames.Length - childsPredic.Length));
+                childExpr = null;
+
                 var dynLINQry = string.Concat(getDynExprLogCompr(propNames, extExpr));
-                var dynLINQParams = setObjValCombin(binTable, binValue, objInstance, dynCriteria);
+                var dynLINQParams = setObjValCombin(propNames, objInstance.First(), dynCriteria);
 
                 checkInvalidCriterAttribs(dynLINQParams, extExpr);
 
                 result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams)
-                                         .Select(getPredicate()); 
+                                         .Select(getPredicate());
             }
             else
                 throw new InvalidCriteriaExpression();
