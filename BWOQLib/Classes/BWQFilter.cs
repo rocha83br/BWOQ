@@ -11,7 +11,8 @@ namespace System.Linq.Dynamic.BitWise
         #region Declarations
 
         private static IQueryable<T> objInstance;
-        public static string bwqExpression { get; set; }
+        private static string bwqExpression;
+        private static BitWiseQuery<T> qryEngine;
 
         #endregion
 
@@ -21,27 +22,30 @@ namespace System.Linq.Dynamic.BitWise
         {
             objInstance = obj;
             bwqExpression = extExp;
+
+            qryEngine = new BitWiseQuery<T>(ref objInstance, ref bwqExpression, this);
         }
 
         #endregion
         
-        public IQueryable ByFilter(T obj)
-        {
-            return new BitWiseQuery<T>(objInstance).ByFilter(obj);
-        }
-
         public IQueryable Where(string extExpr)
         {
-            return new BitWiseQuery<T>(objInstance, bwqExpression).Where(extExpr);
+            return qryEngine.Where(extExpr);
         }
+
+        public BWQFilter<T> Where(string extExpr, bool hasSufix)
+        {
+            return qryEngine.Where(extExpr, hasSufix);
+        }
+
         public IQueryable OrderBy(string extExpr)
         {
-            return new BitWiseQuery<T>(objInstance).OrderBy(extExpr);
+            return qryEngine.OrderBy(extExpr);
         }
 
         public IQueryable GroupBy(string extExpr)
         {
-            return new BitWiseQuery<T>(objInstance).GroupBy(extExpr);
+            return qryEngine.GroupBy(extExpr);
         }
     }
 }

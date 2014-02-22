@@ -51,7 +51,7 @@ namespace BWOQ
            
             var bwq = new BitWiseQuery<Person>(personList.AsQueryable());
 
-            var objList = bwq.Query("13>1:6>2:2").Where("4>1:2::Mazzarope");
+            var objList = bwq.Query("13>1:6>2:2", true).Where("8::Carlos");
         }
     }
 }
