@@ -38,9 +38,19 @@ namespace System.Linq.Dynamic.BitWise
             return qryEngine.Where(extExpr, hasSufix);
         }
 
+        public string Where(string extExpr, EnumSerialDataType dataType)
+        {
+            return qryEngine.Where(extExpr, dataType);
+        }
+
         public IQueryable OrderBy(string extExpr)
         {
             return qryEngine.OrderBy(extExpr);
+        }
+
+        public string OrderBy(string extExpr, EnumSerialDataType dataType)
+        {
+            return qryEngine.OrderBy(extExpr, dataType);
         }
 
         public IQueryable OrderByDescending(string extExpr)
@@ -48,9 +58,19 @@ namespace System.Linq.Dynamic.BitWise
             return qryEngine.OrderByDescending(extExpr);
         }
 
+        public string OrderByDescending(string extExpr, EnumSerialDataType dataType)
+        {
+            return qryEngine.OrderByDescending(extExpr, dataType);
+        }
+
         public IQueryable GroupBy(string extExpr)
         {
             return qryEngine.GroupBy(extExpr);
+        }
+
+        public string GroupBy(string extExpr, EnumSerialDataType dataType)
+        {
+            return qryEngine.GroupBy(extExpr, dataType);
         }
     }
 }

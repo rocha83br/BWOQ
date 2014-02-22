@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections;
@@ -6,6 +7,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Dynamic;
+using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace System.Linq.Dynamic.BitWise
 {
@@ -240,7 +243,80 @@ namespace System.Linq.Dynamic.BitWise
         private void checkInvalidCriterAttribs(object[] dynParams, string extExpr)
         {
             if (dynParams.Any(prm => prm is DateTime || prm is int) && !extExpr.Contains("="))
-                throw new InvalidCriterAttrib();
+                throw new InvalidCriteriaAttribute();
+        }
+
+        private static void cloneObjectData(object source, object destination, bool cloneComposition)
+        {
+            object newSourceInstance = null;
+            object sourceValue = null;
+            var genInstType = objInstance.First().GetType();
+
+            if ((source != null) && (destination != null))
+            {
+                foreach (var prop in source.GetType().GetProperties())
+                {
+                    var destPropInstance = destination.GetType().GetProperties()
+                                                                .FirstOrDefault(atb => atb.Name.ToLower().Equals(prop.Name.ToLower()));
+
+                    try { sourceValue = prop.GetValue(source, null); }
+                    catch { }
+
+                    if (cloneComposition)
+                        if (prop.PropertyType.Module.Name.Equals(genInstType.Module.Name) && prop.PropertyType.IsClass)
+                        {
+                            newSourceInstance = Activator.CreateInstance(prop.PropertyType);
+                            cloneObjectData(sourceValue, newSourceInstance, cloneComposition);
+                        }
+
+                    if ((destPropInstance != null) && destPropInstance.CanWrite)
+                    {
+                        if (prop.PropertyType.GetInterface("IList") == null)
+                        {
+                            try { destPropInstance.SetValue(destination, (newSourceInstance ?? sourceValue), null); }
+                            catch { }
+                        }
+                        else
+                        {
+                            if (newSourceInstance != null)
+                                foreach (var listItem in ((IList)newSourceInstance))
+                                {
+                                    var newItem = Activator.CreateInstance(listItem.GetType());
+                                    cloneObjectData(listItem, newItem, cloneComposition);
+                                    ((IList)newSourceInstance).Add(newItem);
+                                }
+                        }
+                    }
+                }
+            }
+        }
+
+        private static T cloneObjectData(object source, bool cloneComposition)
+        {
+            var destObject = Activator.CreateInstance<T>();
+
+            cloneObjectData(source, destObject, cloneComposition);
+
+            return destObject;
+        }
+
+        private static string serializeResult(IQueryable dynRes, EnumSerialDataType returnDataType)
+        {
+            if (returnDataType == EnumSerialDataType.XML)
+            {
+                List<T> result = new List<T>();
+                var xmlSerial = new XmlSerializer(typeof(List<T>));
+                var memStream = new MemoryStream();
+
+                foreach (var res in dynRes)
+                    result.Add(cloneObjectData(res, false));
+
+                xmlSerial.Serialize(memStream, result);
+
+                return new StreamReader(memStream).ReadToEnd();
+            }
+            else
+                return JsonConvert.SerializeObject(dynRes);
         }
 
         #endregion
@@ -260,9 +336,11 @@ namespace System.Linq.Dynamic.BitWise
             return new BWQFilter<T>(objInstance, bwqExpr as string);
         }
 
-        public IQueryable Where(string extExpr)
+        public string Query(string extExpr, EnumSerialDataType dataType)
         {
-            return CompositeWhere(extExpr).Select(getPredicateExpr());
+            var dynRes = Query(extExpr, true);
+
+            return serializeResult(dynRes, dataType);
         }
 
         public IQueryable<T> CompositeWhere(string extExpr)
@@ -296,11 +374,23 @@ namespace System.Linq.Dynamic.BitWise
             return result;
         }
 
+        public IQueryable Where(string extExpr)
+        {
+            return CompositeWhere(extExpr).Select(getPredicateExpr());
+        }
+
         public BWQFilter<T> Where(string extExpr, bool hasSufix)
         {
             searchResult = CompositeWhere(extExpr);
 
             return preFilter;
+        }
+
+        public string Where(string extExpr, EnumSerialDataType dataType)
+        {
+            var dynRes = Where(extExpr);
+
+            return serializeResult(dynRes, dataType);
         }
 
         public IQueryable OrderBy(string extExpr)
@@ -314,6 +404,13 @@ namespace System.Linq.Dynamic.BitWise
             return result;
         }
 
+        public string OrderBy(string extExpr, EnumSerialDataType dataType)
+        {
+            var dynRes = OrderBy(extExpr);
+
+            return serializeResult(dynRes, dataType);
+        }
+
         public IQueryable OrderByDescending(string extExpr)
         {
             IQueryable result = null;
@@ -325,6 +422,13 @@ namespace System.Linq.Dynamic.BitWise
             return result;
         }
 
+        public string OrderByDescending(string extExpr, EnumSerialDataType dataType)
+        {
+            var dynRes = OrderByDescending(extExpr);
+
+            return serializeResult(dynRes, dataType);
+        }
+
         public IQueryable GroupBy(string extExpr)
         {
             IQueryable result = null;
@@ -334,6 +438,13 @@ namespace System.Linq.Dynamic.BitWise
                                      .Select(getPredicateExpr());
 
             return result;
+        }
+
+        public string GroupBy(string extExpr, EnumSerialDataType dataType)
+        {
+            var dynRes = GroupBy(extExpr);
+
+            return serializeResult(dynRes, dataType);
         }
 
         #endregion
