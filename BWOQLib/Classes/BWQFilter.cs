@@ -43,6 +43,11 @@ namespace System.Linq.Dynamic.BitWise
             return qryEngine.OrderBy(extExpr);
         }
 
+        public IQueryable OrderByDescending(string extExpr)
+        {
+            return qryEngine.OrderByDescending(extExpr);
+        }
+
         public IQueryable GroupBy(string extExpr)
         {
             return qryEngine.GroupBy(extExpr);

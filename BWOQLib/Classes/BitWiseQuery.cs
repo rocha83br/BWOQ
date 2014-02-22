@@ -14,7 +14,7 @@ namespace System.Linq.Dynamic.BitWise
         #region Declarations
 
         private static IQueryable<T> objInstance { get; set; }
-        public static IQueryable searchResult { get; set; }
+        public static IQueryable<T> searchResult { get; set; }
         public static BWQFilter<T> preFilter { get; set; }
         private string predicExpr { get; set; }
         
@@ -112,7 +112,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private bool valCriterExpr(string extExpr)
         {
-            return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[a-z0-9](|&|=|&=)$");
+            return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[a-z0-9.-/](|&|=|&=)$");
         }
 
         private bool valPredicExpr(string extExpr)
@@ -127,10 +127,10 @@ namespace System.Linq.Dynamic.BitWise
 
         private string getPredicateExpr()
         {
-            return getPredicateExpr(string.Empty);
+            return getPredicateExpr(string.Empty, true);
         }
 
-        private string getPredicateExpr(string extExpr)
+        private string getPredicateExpr(string extExpr, bool compositeDynamic)
         {
             string[] predicProps;
             string result;
@@ -141,16 +141,19 @@ namespace System.Linq.Dynamic.BitWise
             if (valPredicExpr(extExpr))
             {
                 predicProps = getPredicProps(objInstance.First(), 
-                                             getPredicCombinDec(this.predicExpr));
+                                             getPredicCombinDec(extExpr));
                 
-                var childExpr = this.predicExpr.Split('>').ToList();
+                var childExpr = extExpr.Split('>').ToList();
                 childExpr.RemoveAt(0); _objProp = null;
                 var childsPredic = getChildsPredic(childExpr.ToArray());
                 Array.Resize(ref predicProps, (predicProps.Length + childsPredic.Length));
                 childsPredic.CopyTo(predicProps, (predicProps.Length - childsPredic.Length));
                 childExpr = null;
 
-                result = string.Concat("new (", string.Join(", ", predicProps), ")");
+                if (compositeDynamic)
+                    result = string.Concat("new (", string.Join(", ", predicProps), ")");
+                else
+                    result = string.Join(", ", predicProps);
             }
             else
                 throw new InvalidQueryExpression();
@@ -244,7 +247,7 @@ namespace System.Linq.Dynamic.BitWise
 
         #region Public Methods
         
-        public IQueryable Query(string bwqExpr)
+        public IQueryable Query(string bwqExpr, bool standAlone)
         {
             if (!valCriterExpr(bwqExpr))
                 throw new InvalidQueryExpression();
@@ -252,14 +255,19 @@ namespace System.Linq.Dynamic.BitWise
             return DynamicQueryable.Select(objInstance, getPredicateExpr());
         }
 
-        public BWQFilter<T> Query(string bwqExpr, bool hasSufix)
+        public BWQFilter<T> Query(string bwqExpr)
         {
             return new BWQFilter<T>(objInstance, bwqExpr as string);
         }
 
         public IQueryable Where(string extExpr)
         {
-            IQueryable result = null;
+            return CompositeWhere(extExpr).Select(getPredicateExpr());
+        }
+
+        public IQueryable<T> CompositeWhere(string extExpr)
+        {
+            IQueryable<T> result = null;
 
             if (valCriterExpr(extExpr))
             {
@@ -280,8 +288,7 @@ namespace System.Linq.Dynamic.BitWise
 
                 checkInvalidCriterAttribs(dynLINQParams, extExpr);
 
-                result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams)
-                                         .Select(getPredicateExpr());
+                result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams);
             }
             else
                 throw new InvalidCriteriaExpression();
@@ -291,7 +298,7 @@ namespace System.Linq.Dynamic.BitWise
 
         public BWQFilter<T> Where(string extExpr, bool hasSufix)
         {
-            searchResult = Where(extExpr);
+            searchResult = CompositeWhere(extExpr);
 
             return preFilter;
         }
@@ -301,7 +308,19 @@ namespace System.Linq.Dynamic.BitWise
             IQueryable result = null;
 
             if (!(searchResult == null))
-                result = DynamicQueryable.OrderBy(searchResult, getPredicateExpr(extExpr));
+                result = searchResult.OrderBy(getPredicateExpr(extExpr, false))
+                                     .Select(getPredicateExpr());
+
+            return result;
+        }
+
+        public IQueryable OrderByDescending(string extExpr)
+        {
+            IQueryable result = null;
+
+            if (!(searchResult == null))
+                result = searchResult.OrderBy(string.Concat(getPredicateExpr(extExpr, false), " DESC"))
+                                     .Select(getPredicateExpr());
 
             return result;
         }
@@ -311,7 +330,8 @@ namespace System.Linq.Dynamic.BitWise
             IQueryable result = null;
 
             if (!(searchResult == null))
-                result = DynamicQueryable.GroupBy(objInstance, getPredicateExpr(extExpr), getPredicateExpr(), null);
+                result = searchResult.GroupBy(getPredicateExpr(extExpr, false), getPredicateExpr(), null)
+                                     .Select(getPredicateExpr());
 
             return result;
         }
