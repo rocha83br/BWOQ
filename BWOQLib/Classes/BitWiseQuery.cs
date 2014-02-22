@@ -313,7 +313,7 @@ namespace System.Linq.Dynamic.BitWise
 
                 xmlSerial.Serialize(memStream, result);
 
-                return new StreamReader(memStream).ReadToEnd();
+                return Encoding.ASCII.GetString(memStream.GetBuffer()); 
             }
             else
                 return JsonConvert.SerializeObject(dynRes);

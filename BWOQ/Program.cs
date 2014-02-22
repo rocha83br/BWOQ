@@ -6,6 +6,7 @@ using System.Linq.Dynamic.BitWise;
 
 namespace BWOQ
 {
+    [Serializable]
     public class Person
     {
         public int Id { get; set; }
@@ -21,6 +22,7 @@ namespace BWOQ
         public Contact Contact { get; set; }
     }
 
+    [Serializable]
     public class Address
     {
         public int Id { get; set; }
@@ -30,6 +32,7 @@ namespace BWOQ
         public string Country { get; set; }
     }
 
+    [Serializable]
     public class Contact
     {
         public int Id { get; set; }
@@ -51,7 +54,7 @@ namespace BWOQ
            
             var bwq = new BitWiseQuery<Person>(personList.AsQueryable());
 
-            var objList = bwq.Query("13>1:6>2:2").Where("4::28", EnumSerialDataType.JSON);
+            var objList = bwq.Query("13>1:6>2:2").Where("4::28", EnumSerialDataType.XML);
         }
     }
 }
