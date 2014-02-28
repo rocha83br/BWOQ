@@ -53,7 +53,8 @@ namespace System.Linq.Dynamic.BitWise
         {
             if ((_objProp == null) || (_objProp.Length == 0))
                 if (!(obj is PropertyInfo))
-                    _objProp = obj.GetType().GetProperties();
+                    _objProp = obj.GetType().GetProperties()
+                                            .Where(prp => !(prp.PropertyType.Name.Equals("ICollection`1"))).ToArray();
                 else
                     _objProp = ((PropertyInfo)obj).PropertyType.GetProperties();
 
@@ -120,7 +121,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private bool valPredicExpr(string extExpr)
         {
-            return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[0-9]$");
+            return string.IsNullOrEmpty(extExpr) || Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[0-9]$");
         }
 
         private string getDynExprPredic(string[] objProps)
@@ -319,31 +320,7 @@ namespace System.Linq.Dynamic.BitWise
                 return JsonConvert.SerializeObject(dynRes);
         }
 
-        #endregion
-
-        #region Public Methods
-        
-        public IQueryable Query(string bwqExpr, bool standAlone)
-        {
-            if (!valCriterExpr(bwqExpr))
-                throw new InvalidQueryExpression();
-
-            return DynamicQueryable.Select(objInstance, getPredicateExpr());
-        }
-
-        public BWQFilter<T> Query(string bwqExpr)
-        {
-            return new BWQFilter<T>(objInstance, bwqExpr as string);
-        }
-
-        public string Query(string extExpr, EnumSerialDataType dataType)
-        {
-            var dynRes = Query(extExpr, true);
-
-            return serializeResult(dynRes, dataType);
-        }
-
-        public IQueryable<T> CompositeWhere(string extExpr)
+        private IQueryable<T> CompositeWhere(string extExpr)
         {
             IQueryable<T> result = null;
 
@@ -374,7 +351,36 @@ namespace System.Linq.Dynamic.BitWise
             return result;
         }
 
-        public IQueryable Where(string extExpr)
+        #endregion
+
+        #region Public Methods
+        
+        public IQueryable Query(string bwqExpr, bool standAlone)
+        {
+            if (!valCriterExpr(bwqExpr))
+                throw new InvalidQueryExpression();
+
+            return DynamicQueryable.Select(objInstance, getPredicateExpr());
+        }
+
+        public BWQFilter<T> Query(string bwqExpr)
+        {
+            return new BWQFilter<T>(objInstance, bwqExpr as string);
+        }
+
+        public string Query(string extExpr, EnumSerialDataType dataType)
+        {
+            var dynRes = Query(extExpr, true);
+
+            return serializeResult(dynRes, dataType);
+        }
+
+        public IQueryable<T> Where(string extExpr)
+        {
+            return CompositeWhere(extExpr);
+        }
+
+        public IQueryable Where(string extExpr, params object[] prm)
         {
             return CompositeWhere(extExpr).Select(getPredicateExpr());
         }
