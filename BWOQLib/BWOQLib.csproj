@@ -8,8 +8,8 @@
     <ProjectGuid>{268C42DE-879D-45E0-8157-4C38D5A029CE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BWOQLib</RootNamespace>
-    <AssemblyName>BWOQLib</AssemblyName>
+    <RootNamespace>System.Linq.Dynamic.BitWise</RootNamespace>
+    <AssemblyName>System.Linq.Dynamic.BitWise</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

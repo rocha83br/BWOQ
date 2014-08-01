@@ -360,7 +360,7 @@ namespace System.Linq.Dynamic.BitWise
             if (!valCriterExpr(bwqExpr))
                 throw new InvalidQueryExpression();
 
-            return DynamicQueryable.Select(objInstance, getPredicateExpr());
+            return DynamicQueryable.Select(objInstance, getPredicateExpr(bwqExpr, true));
         }
 
         public BWQFilter<T> Query(string bwqExpr)
@@ -375,14 +375,12 @@ namespace System.Linq.Dynamic.BitWise
             return serializeResult(dynRes, dataType);
         }
 
-        public IQueryable<T> Where(string extExpr)
+        public IQueryable Where(string extExpr)
         {
-            return CompositeWhere(extExpr);
-        }
-
-        public IQueryable Where(string extExpr, params object[] prm)
-        {
-            return CompositeWhere(extExpr).Select(getPredicateExpr());
+            if (string.IsNullOrEmpty(predicExpr))
+                return CompositeWhere(extExpr);
+            else
+                return CompositeWhere(extExpr).Select(getPredicateExpr());
         }
 
         public BWQFilter<T> Where(string extExpr, bool hasSufix)
@@ -394,7 +392,7 @@ namespace System.Linq.Dynamic.BitWise
 
         public string Where(string extExpr, EnumSerialDataType dataType)
         {
-            var dynRes = Where(extExpr);
+            var dynRes = Where(extExpr).Select(getPredicateExpr());
 
             return serializeResult(dynRes, dataType);
         }
