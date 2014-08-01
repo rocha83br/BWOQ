@@ -392,7 +392,7 @@ namespace System.Linq.Dynamic.BitWise
 
         public string Where(string extExpr, EnumSerialDataType dataType)
         {
-            var dynRes = Where(extExpr).Select(getPredicateExpr());
+            var dynRes = Where(extExpr);
 
             return serializeResult(dynRes, dataType);
         }
