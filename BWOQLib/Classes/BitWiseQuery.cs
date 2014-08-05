@@ -9,14 +9,15 @@ using System.Linq;
 using System.Linq.Dynamic;
 using System.Xml.Serialization;
 using Newtonsoft.Json;
+using System.Linq.Dynamic.BitWise.Helpers;
 
 namespace System.Linq.Dynamic.BitWise
 {
-    public class BitWiseQuery<T> where T : class
+    public class BitWiseQuery<T> : IBitWiseQuery where T : class
     {
         #region Declarations
 
-        private static IQueryable<T> objInstance { get; set; }
+        private IQueryable<T> objInstance { get; set; }
         public static IQueryable<T> searchResult { get; set; }
         public static BWQFilter<T> preFilter { get; set; }
         private string predicExpr { get; set; }
@@ -24,6 +25,20 @@ namespace System.Linq.Dynamic.BitWise
         #endregion
 
         #region Constructors
+
+        public BitWiseQuery(IList objRef, Type itemType)
+        {
+            var result = new List<T>();
+
+            foreach(var item in objRef)
+            {
+                var resultItem = Activator.CreateInstance(itemType);
+                Reflector.CloneObjectData(item, resultItem);
+                ((IList)result).Add(resultItem);
+            }
+            
+            objInstance = result.AsQueryable();
+        }
 
         public BitWiseQuery(IQueryable<T> objRef)
         {
@@ -48,8 +63,8 @@ namespace System.Linq.Dynamic.BitWise
         #region Helper Methods
 
         // Faceding Reflection (Performance Aspect)
-        private static PropertyInfo[] _objProp;
-        private static PropertyInfo[] listObjProp(object obj)
+        private PropertyInfo[] _objProp;
+        private PropertyInfo[] listObjProp(object obj)
         {
             if ((_objProp == null) || (_objProp.Length == 0))
                 if (!(obj is PropertyInfo))
@@ -247,7 +262,7 @@ namespace System.Linq.Dynamic.BitWise
                 throw new InvalidCriteriaAttribute();
         }
 
-        private static void cloneObjectData(object source, object destination, bool cloneComposition)
+        private void cloneObjectData(object source, object destination, bool cloneComposition)
         {
             object newSourceInstance = null;
             object sourceValue = null;
@@ -292,7 +307,7 @@ namespace System.Linq.Dynamic.BitWise
             }
         }
 
-        private static T cloneObjectData(object source, bool cloneComposition)
+        private T cloneObjectData(object source, bool cloneComposition)
         {
             var destObject = Activator.CreateInstance<T>();
 
@@ -301,7 +316,7 @@ namespace System.Linq.Dynamic.BitWise
             return destObject;
         }
 
-        private static string serializeResult(IQueryable dynRes, EnumSerialDataType returnDataType)
+        private string serializeResult(IQueryable dynRes, EnumSerialDataType returnDataType)
         {
             if (returnDataType == EnumSerialDataType.XML)
             {
@@ -343,7 +358,7 @@ namespace System.Linq.Dynamic.BitWise
 
                 checkInvalidCriterAttribs(dynLINQParams, extExpr);
 
-                result = DynamicQueryable.Where<T>(objInstance, dynLINQry, dynLINQParams);
+                result = DynamicQueryable.Where<T>(objInstance.OfType<T>(), dynLINQry, dynLINQParams);
             }
             else
                 throw new InvalidCriteriaExpression();
@@ -401,9 +416,13 @@ namespace System.Linq.Dynamic.BitWise
         {
             IQueryable result = null;
 
-            if (!(searchResult == null))
+            if (searchResult == null) searchResult = objInstance;
+
+            if (!string.IsNullOrEmpty(predicExpr))
                 result = searchResult.OrderBy(getPredicateExpr(extExpr, false))
                                      .Select(getPredicateExpr());
+            else
+                result = searchResult.OrderBy(getPredicateExpr(extExpr, false));
 
             return result;
         }

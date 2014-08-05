@@ -6,7 +6,7 @@ using System.Text;
 
 namespace System.Linq.Dynamic.BitWise
 {
-    public class BWQFilter<T> : IBitWiseQuery<T> where T : class
+    public class BWQFilter<T> : IBWQEngine<T> where T : class
     {
         #region Declarations
 

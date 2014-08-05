@@ -58,7 +58,7 @@ namespace BWOQ
 
             var bwq = new BitWiseQuery<Person>(personList.AsQueryable());
 
-            var objList = bwq.Query("13>1:6>2:2").Where("4::22", EnumSerialDataType.JSON);
+            var objList = bwq.Query("13>1:6>2:2").Where("4::Car");
 
         }
     }

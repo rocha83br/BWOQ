@@ -52,7 +52,9 @@
     <Compile Include="Classes\CustomExceptions\InvalidCriteriaAttribute.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidCriteriaExpression.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidQueryExpression.cs" />
+    <Compile Include="Helpers\Reflector.cs" />
     <Compile Include="Enumerators\EnumSerialDataType.cs" />
+    <Compile Include="Interfaces\IBitWiseQuery.cs" />
     <Compile Include="Interfaces\IBWQEngine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

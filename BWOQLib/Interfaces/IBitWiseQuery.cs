@@ -6,8 +6,10 @@ using System.Collections;
 
 namespace System.Linq.Dynamic.BitWise
 {
-    public interface IBWQEngine<T> where T : class
+    public interface IBitWiseQuery
     {
+        IQueryable Query(string extExp, bool standAlone);
+
         IQueryable Where(string extExp);
 
         IQueryable OrderBy(string extExp);
