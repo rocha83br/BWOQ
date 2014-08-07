@@ -438,9 +438,10 @@ namespace System.Linq.Dynamic.BitWise
         {
             IQueryable result = null;
 
-            if (!(searchResult == null))
-                result = searchResult.OrderBy(string.Concat(getPredicateExpr(extExpr, false), " DESC"))
-                                     .Select(getPredicateExpr());
+            if (searchResult == null) searchResult = objInstance;
+
+            result = searchResult.OrderBy(string.Concat(getPredicateExpr(extExpr, false), " DESC"))
+                                    .Select(getPredicateExpr());
 
             return result;
         }
@@ -452,20 +453,21 @@ namespace System.Linq.Dynamic.BitWise
             return serializeResult(dynRes, dataType);
         }
 
-        public IQueryable GroupBy(string extExpr)
+        public IQueryable GroupBy(string grpExpr, string _byExpr)
         {
             IQueryable result = null;
 
-            if (!(searchResult == null))
-                result = searchResult.GroupBy(getPredicateExpr(extExpr, false), getPredicateExpr(), null)
-                                     .Select(getPredicateExpr());
+            if (searchResult == null) searchResult = objInstance;
+
+            result = searchResult.GroupBy(getPredicateExpr(_byExpr, true), 
+                                          getPredicateExpr(grpExpr, true), null);
 
             return result;
         }
 
-        public string GroupBy(string extExpr, EnumSerialDataType dataType)
+        public string GroupBy(string grpExpr, string extExpr, EnumSerialDataType dataType)
         {
-            var dynRes = GroupBy(extExpr);
+            var dynRes = GroupBy(grpExpr, extExpr);
 
             return serializeResult(dynRes, dataType);
         }

@@ -14,6 +14,8 @@ namespace System.Linq.Dynamic.BitWise
 
         IQueryable OrderBy(string extExp);
 
-        IQueryable GroupBy(string extExp);
+        IQueryable OrderByDescending(string extExp);
+
+        IQueryable GroupBy(string _byExpr, string grpExp);
     }
 }

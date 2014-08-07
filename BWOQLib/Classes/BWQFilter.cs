@@ -63,14 +63,14 @@ namespace System.Linq.Dynamic.BitWise
             return qryEngine.OrderByDescending(extExpr, dataType);
         }
 
-        public IQueryable GroupBy(string extExpr)
+        public IQueryable GroupBy(string grpExpr, string extExpr)
         {
-            return qryEngine.GroupBy(extExpr);
+            return qryEngine.GroupBy(grpExpr, extExpr);
         }
 
-        public string GroupBy(string extExpr, EnumSerialDataType dataType)
+        public string GroupBy(string grpExpr, string extExpr, EnumSerialDataType dataType)
         {
-            return qryEngine.GroupBy(extExpr, dataType);
+            return qryEngine.GroupBy(grpExpr, extExpr, dataType);
         }
     }
 }
