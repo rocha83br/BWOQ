@@ -7,7 +7,9 @@ namespace System.Linq.Dynamic.BitWise
 {
     public class InvalidQueryExpression : Exception
     {
-        internal const string errDesc = "Invalid query expression. Try : Numeric[AttribCombin]>Numeric[ChildOrdinal]:Numeric[ChildAttribCombin]";
+        internal const string errDesc = @"Invalid query expression. Try : Numeric[AttribCombin]
+                                                                          >Numeric[ChildOrdinal]
+                                                                          :Numeric[ChildAttribCombin]";
         public InvalidQueryExpression() : base(errDesc)
         {
         }

@@ -113,30 +113,35 @@ namespace System.Linq.Dynamic.BitWise
 
         private object[] setObjValCombin(string[] propNames, object obj, string criteria)
         {
-            object[] result; long numTest; DateTime dateTest;
-            bool numArg = long.TryParse(criteria, out numTest);
+            criteria = Regex.Replace(criteria, @"(=|\+|-|=\+|=\-)$", string.Empty);
+
+            object[] result; decimal numTest; DateTime dateTest;
+            bool numArg = decimal.TryParse(criteria, out numTest);
             bool dateArg = DateTime.TryParse(criteria, out dateTest);
 
             result = listPropValues(obj, propNames);
 
             for (var cont = 0; cont < propNames.Length; cont++)
-                if (numArg || (!numArg && (result[cont].GetType() == typeof(string))))
-                    result[cont] = criteria as object;
+            {
+                if (numArg) result[cont] = Convert.ChangeType(numTest.ToString(), result[cont].GetType());
+                else if (!numArg && (result[cont].GetType() == typeof(string)))
+                    result[cont] = criteria.ToString();
                 else if (result[cont].GetType() == typeof(DateTime))
                     result[cont] = dateArg ? dateTest as object
                                            : DateTime.MinValue;
+            }
             
             return result;
         }
 
         private bool valCriterExpr(string extExpr)
         {
-            return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[a-z0-9.-/](|&|=|&=)$");
+            return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]:*)::.*[a-z0-9.-/](|&|=|&=|\+|&+|-|&-|=\+|=\-)$");
         }
 
         private bool valPredicExpr(string extExpr)
         {
-            return string.IsNullOrEmpty(extExpr) || Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*:).*[0-9]$");
+            return string.IsNullOrEmpty(extExpr) || Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*).*[0-9](|\+|\*)$");
         }
 
         private string getDynExprPredic(string[] objProps)
@@ -149,9 +154,10 @@ namespace System.Linq.Dynamic.BitWise
             return getPredicateExpr(string.Empty, true);
         }
 
-        private string getPredicateExpr(string extExpr, bool compositeDynamic)
+        private string getPredicateExpr(string extExpr, bool compositeDynamic, bool agregate = false)
         {
             string[] predicProps;
+            string[] groupPredicProps = null;
             string result;
 
             if (string.IsNullOrEmpty(extExpr))
@@ -161,6 +167,10 @@ namespace System.Linq.Dynamic.BitWise
             {
                 predicProps = getPredicProps(objInstance.First(), 
                                              getPredicCombinDec(extExpr));
+
+                if (agregate && extExpr.EndsWith("*")) predicProps = new string[] { "Key as Key, Count() as CountResult" };
+
+                if (agregate && extExpr.EndsWith("+")) predicProps = new string[] { "Key as Key, Sum() as SumResult" };
                 
                 var childExpr = extExpr.Split('>').ToList();
                 childExpr.RemoveAt(0); _objProp = null;
@@ -195,8 +205,10 @@ namespace System.Linq.Dynamic.BitWise
         {
             int result;
 
+            extExpr = extExpr.Replace("*", string.Empty).Replace("+", string.Empty);
+
             if (!int.TryParse(extExpr, out result))
-                if (Regex.IsMatch(extExpr, @"^[0-9]*>[0-9]*:*[0-9]"))
+                if (valPredicExpr(extExpr))
                     result = int.Parse(extExpr.Substring(0, extExpr.IndexOf('>')));
 
             return result;
@@ -209,10 +221,12 @@ namespace System.Linq.Dynamic.BitWise
             foreach (var cexp in childExpr)
             {
                 var cnvExpr = cexp.Split(':');
+                cnvExpr[1] = cnvExpr[1].Replace("*", string.Empty).Replace("+", string.Empty);
                 var childObj = getChildObj(int.Parse(cnvExpr[0]));
                 var itemPredic = getPredicProps(childObj, int.Parse(cnvExpr[1]))
                                  .Select(pdp => string.Concat(((PropertyInfo)childObj).PropertyType.Name, ".", pdp))
                                  .ToArray();
+
                 Array.Resize(ref result, (result.Length + itemPredic.Length));
                 itemPredic.CopyTo(result, (result.Length - itemPredic.Length));
             }
@@ -242,23 +256,37 @@ namespace System.Linq.Dynamic.BitWise
             int idx = 0;
 
             var result = string.Join(" ", from prp in objProps
-                                    select string.Concat(getDynExprEqlt(prp, filterExpr, idx++),
+                                    select string.Concat(getDynExprCompare(prp, filterExpr, idx++),
                                                          filterExpr.Contains("&") ? " And " : " Or  "));
             
             return result.Substring(0, (result.Length - 5));
         }
 
-        private string getDynExprEqlt(string prp, string filterExpr, int idx)
+        private string getDynExprCompare(string prp, string filterExpr, int idx)
         {
-            return string.Join(" ", string.Concat(prp, 
-                                                  filterExpr.Contains("=") 
-                                                  ? string.Concat(" = ", "@", idx) 
-                                                  : string.Concat(".Contains(@", idx, ") ")));
+            var result = prp;
+
+            if (filterExpr.EndsWith("=+"))
+                result += string.Concat(" >= @", idx);
+            else if (filterExpr.EndsWith("=-"))
+                result += string.Concat(" <= @", idx);
+            else if (filterExpr.EndsWith("="))
+                result += string.Concat(" = @", idx);
+            else if (filterExpr.EndsWith("+"))
+                result += string.Concat(" > @", idx);
+            else if (filterExpr.EndsWith("-"))
+                result += string.Concat(" < @", idx);
+            else
+                result += string.Concat(".Contains(@", idx, ") ");
+
+            return string.Join(" ", result);
         }
 
         private void checkInvalidCriterAttribs(object[] dynParams, string extExpr)
         {
-            if (dynParams.Any(prm => prm is DateTime || prm is int) && !extExpr.Contains("="))
+            decimal fake;
+            if (dynParams.Any(prm => prm is DateTime || decimal.TryParse(prm.ToString(), out fake)) 
+                && !Regex.IsMatch(extExpr, @"(=|\+|-|=+|=-).*$"))
                 throw new InvalidCriteriaAttribute();
         }
 
@@ -341,24 +369,29 @@ namespace System.Linq.Dynamic.BitWise
 
             if (valCriterExpr(extExpr))
             {
-                var binTable = getPropBinTable(objInstance.First());
-                var binValue = getPredicCombinDec(getCriterPredics(extExpr));
-                var propNames = getObjPropCombin(binTable, binValue, objInstance.First());
-                var dynCriteria = getDynExprCriter(extExpr);
+                if (!Regex.IsMatch(extExpr, @"[a-z*](\+|&+|-|&-|=\+|=\-)$"))
+                {
+                    var binTable = getPropBinTable(objInstance.First());
+                    var binValue = getPredicCombinDec(getCriterPredics(extExpr));
+                    var propNames = getObjPropCombin(binTable, binValue, objInstance.First());
+                    var dynCriteria = getDynExprCriter(extExpr);
 
-                var childExpr = getCriterPredics(extExpr).Split('>').ToList();
-                childExpr.RemoveAt(0); _objProp = null;
-                var childsPredic = getChildsPredic(childExpr.ToArray());
-                Array.Resize(ref propNames, (propNames.Length + childsPredic.Length));
-                childsPredic.CopyTo(propNames, (propNames.Length - childsPredic.Length));
-                childExpr = null;
+                    var childExpr = getCriterPredics(extExpr).Split('>').ToList();
+                    childExpr.RemoveAt(0); _objProp = null;
+                    var childsPredic = getChildsPredic(childExpr.ToArray());
+                    Array.Resize(ref propNames, (propNames.Length + childsPredic.Length));
+                    childsPredic.CopyTo(propNames, (propNames.Length - childsPredic.Length));
+                    childExpr = null;
 
-                var dynLINQry = string.Concat(getDynExprLogCompr(propNames, extExpr));
-                var dynLINQParams = setObjValCombin(propNames, objInstance.First(), dynCriteria);
+                    var dynLINQry = string.Concat(getDynExprLogCompr(propNames, extExpr));
+                    var dynLINQParams = setObjValCombin(propNames, objInstance.First(), dynCriteria);
 
-                checkInvalidCriterAttribs(dynLINQParams, extExpr);
+                    checkInvalidCriterAttribs(dynLINQParams, extExpr);
 
-                result = DynamicQueryable.Where<T>(objInstance.OfType<T>(), dynLINQry, dynLINQParams);
+                    result = DynamicQueryable.Where<T>(objInstance.OfType<T>(), dynLINQry, dynLINQParams);
+                }
+                else
+                    new InvalidCriterCombinAttribute();
             }
             else
                 throw new InvalidCriteriaExpression();
@@ -420,7 +453,7 @@ namespace System.Linq.Dynamic.BitWise
 
             if (!string.IsNullOrEmpty(predicExpr))
                 result = searchResult.OrderBy(getPredicateExpr(extExpr, false))
-                                     .Select(getPredicateExpr());
+                                        .Select(getPredicateExpr());
             else
                 result = searchResult.OrderBy(getPredicateExpr(extExpr, false));
 
@@ -459,9 +492,12 @@ namespace System.Linq.Dynamic.BitWise
 
             if (searchResult == null) searchResult = objInstance;
 
-            result = searchResult.GroupBy(getPredicateExpr(_byExpr, true), 
-                                          getPredicateExpr(grpExpr, true), null);
+            result = searchResult.GroupBy(getPredicateExpr(_byExpr, true),
+                                          getPredicateExpr(grpExpr, true));
 
+            if (grpExpr.EndsWith("*") || grpExpr.EndsWith("+"))
+                result = result.Select(getPredicateExpr(grpExpr, true, true));
+            
             return result;
         }
 

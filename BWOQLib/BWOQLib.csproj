@@ -49,6 +49,8 @@
   <ItemGroup>
     <Compile Include="Classes\BWQFilter.cs" />
     <Compile Include="Classes\BitWiseQuery.cs" />
+    <Compile Include="Classes\CustomExceptions\InvalidCriterCombinAttribute.cs" />
+    <Compile Include="Classes\CustomExceptions\InvalidGroupExpression.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidCriteriaAttribute.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidCriteriaExpression.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidQueryExpression.cs" />
