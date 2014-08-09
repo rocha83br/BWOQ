@@ -58,7 +58,7 @@ namespace BWOQ
 
             var bwq = new BitWiseQuery<Person>(personList.AsQueryable());
 
-            var objList = bwq.Query("24>1:6>2:2").Where("16::0.1=+", true).GroupBy("17^", "8");
+            var objList = bwq.Query("24").Where("16::0.1=+", true).GroupBy("17^", "8");
         }
     }
 }

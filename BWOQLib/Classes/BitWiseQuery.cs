@@ -230,7 +230,7 @@ namespace System.Linq.Dynamic.BitWise
             foreach (var cexp in childExpr)
             {
                 var cnvExpr = cexp.Split(':');
-                cnvExpr[1] = Regex.Replace(cnvExpr[1], @"(\*|\+|~|^|\-)$", string.Empty);
+                cnvExpr[1] = Regex.Replace(cnvExpr[1], @"(\*|\+|~|\^|\-)$", string.Empty);
                 var childObj = getChildObj(int.Parse(cnvExpr[0]));
                 var itemPredic = getPredicProps(childObj, int.Parse(cnvExpr[1]))
                                  .Select(pdp => string.Concat(((PropertyInfo)childObj).PropertyType.Name, ".", pdp))
