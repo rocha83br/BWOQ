@@ -414,7 +414,7 @@ namespace System.Linq.Dynamic.BitWise
         
         public IQueryable Query(string bwqExpr, bool standAlone)
         {
-            if (!valCriterExpr(bwqExpr))
+            if (!valPredicExpr(bwqExpr))
                 throw new InvalidQueryExpression();
 
             return DynamicQueryable.Select(objInstance, getPredicateExpr(bwqExpr, true));
