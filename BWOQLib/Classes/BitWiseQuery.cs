@@ -141,7 +141,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private bool valPredicExpr(string extExpr)
         {
-            return string.IsNullOrEmpty(extExpr) || Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*).*[0-9](|\+|\*)$");
+            return string.IsNullOrEmpty(extExpr) || Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]*).*[0-9](|\+|\*|\~|\^|\-)$");
         }
 
         private string getDynExprPredic(string[] objProps)
@@ -157,7 +157,6 @@ namespace System.Linq.Dynamic.BitWise
         private string getPredicateExpr(string extExpr, bool compositeDynamic, bool agregate = false)
         {
             string[] predicProps;
-            string[] groupPredicProps = null;
             string result;
 
             if (string.IsNullOrEmpty(extExpr))
@@ -170,7 +169,17 @@ namespace System.Linq.Dynamic.BitWise
 
                 if (agregate && extExpr.EndsWith("*")) predicProps = new string[] { "Key as Key, Count() as CountResult" };
 
-                if (agregate && extExpr.EndsWith("+")) predicProps = new string[] { "Key as Key, Sum() as SumResult" };
+                if (agregate && extExpr.EndsWith("^")) predicProps = new string[] { string.Concat("Key as Key, ", 
+                                                                                    string.Join(", ", predicProps.Select(pdc => string.Format("Sum({0}) as SumOf{0}s", pdc)))) };
+
+                if (agregate && extExpr.EndsWith("~")) predicProps = new string[] { string.Concat("Key as Key, ", 
+                                                                                    string.Join(", ", predicProps.Select(pdc => string.Format("Average({0}) as AverageOf{0}s", pdc)))) };
+
+                if (agregate && extExpr.EndsWith("+")) predicProps = new string[] { string.Concat("Key as Key, ", 
+                                                                                    string.Join(", ", predicProps.Select(pdc => string.Format("Max({0}) as MaximumOf{0}s", pdc)))) };
+
+                if (agregate && extExpr.EndsWith("-")) predicProps = new string[] { string.Concat("Key as Key, ", 
+                                                                                    string.Join(", ", predicProps.Select(pdc => string.Format("Min({0}) as MinimumOf{0}s", pdc)))) };
                 
                 var childExpr = extExpr.Split('>').ToList();
                 childExpr.RemoveAt(0); _objProp = null;
@@ -205,7 +214,7 @@ namespace System.Linq.Dynamic.BitWise
         {
             int result;
 
-            extExpr = extExpr.Replace("*", string.Empty).Replace("+", string.Empty);
+            extExpr = Regex.Replace(extExpr, @"(\*|\+|\~|\^|\-)$", string.Empty);
 
             if (!int.TryParse(extExpr, out result))
                 if (valPredicExpr(extExpr))
@@ -221,7 +230,7 @@ namespace System.Linq.Dynamic.BitWise
             foreach (var cexp in childExpr)
             {
                 var cnvExpr = cexp.Split(':');
-                cnvExpr[1] = cnvExpr[1].Replace("*", string.Empty).Replace("+", string.Empty);
+                cnvExpr[1] = Regex.Replace(cnvExpr[1], @"(\*|\+|~|^|\-)$", string.Empty);
                 var childObj = getChildObj(int.Parse(cnvExpr[0]));
                 var itemPredic = getPredicProps(childObj, int.Parse(cnvExpr[1]))
                                  .Select(pdp => string.Concat(((PropertyInfo)childObj).PropertyType.Name, ".", pdp))
@@ -495,7 +504,7 @@ namespace System.Linq.Dynamic.BitWise
             result = searchResult.GroupBy(getPredicateExpr(_byExpr, true),
                                           getPredicateExpr(grpExpr, true));
 
-            if (grpExpr.EndsWith("*") || grpExpr.EndsWith("+"))
+            if (Regex.IsMatch(grpExpr, @"(\*|\+|\~|\^|\-)$"))
                 result = result.Select(getPredicateExpr(grpExpr, true, true));
             
             return result;
