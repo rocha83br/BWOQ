@@ -136,7 +136,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private bool valCriterExpr(string extExpr)
         {
-            return Regex.IsMatch(extExpr, @"^[0-9]*(|:|>[0-9]:*)::.*[a-z0-9.-/](|&|=|&=|\+|&+|-|&-|=\+|=\-)$");
+            return Regex.IsMatch(extExpr, @"^[0-9].*(|:|>[0-9]*)::.*[a-z0-9.-/](|&|=|&=|\+|&+|-|&-|=\+|=\-)$");
         }
 
         private bool valPredicExpr(string extExpr)
