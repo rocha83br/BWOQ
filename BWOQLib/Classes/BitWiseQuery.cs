@@ -444,7 +444,9 @@ namespace System.Linq.Dynamic.BitWise
         {
             searchResult = CompositeWhere(extExpr);
 
-            return preFilter;
+            var result = new BWQFilter<T>(searchResult, string.Empty);
+
+            return result;
         }
 
         public string Where(string extExpr, EnumSerialDataType dataType)
