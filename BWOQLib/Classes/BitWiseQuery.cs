@@ -136,7 +136,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private bool valCriterExpr(string extExpr)
         {
-            return Regex.IsMatch(extExpr, @"^[0-9].*(|:|>[0-9]*)::.*[a-z0-9.-/](|&|=|&=|\+|&+|-|&-|=\+|=\-)$");
+            return Regex.IsMatch(extExpr, @"^[0-9].*(|:|>[0-9]*)::.*[A-Za-z0-9.-/](|&|=|&=|\+|&+|-|&-|=\+|=\-)$");
         }
 
         private bool valPredicExpr(string extExpr)
@@ -378,7 +378,7 @@ namespace System.Linq.Dynamic.BitWise
 
             if (valCriterExpr(extExpr))
             {
-                if (!Regex.IsMatch(extExpr, @"[a-z*](\+|&+|-|&-|=\+|=\-)$"))
+                if (!Regex.IsMatch(extExpr, @"[A-Za-z*](\+|&+|-|&-|=\+|=\-)$"))
                 {
                     var binTable = getPropBinTable(objInstance.First());
                     var binValue = getPredicCombinDec(getCriterPredics(extExpr));
