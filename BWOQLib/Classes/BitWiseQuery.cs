@@ -118,17 +118,20 @@ namespace System.Linq.Dynamic.BitWise
             object[] result; decimal numTest; DateTime dateTest;
             bool numArg = decimal.TryParse(criteria, out numTest);
             bool dateArg = DateTime.TryParse(criteria, out dateTest);
+            bool nullArg = criteria.ToLower().Equals("null");
 
             result = listPropValues(obj, propNames);
 
             for (var cont = 0; cont < propNames.Length; cont++)
             {
                 if (numArg) result[cont] = Convert.ChangeType(numTest.ToString(), result[cont].GetType());
-                else if (!numArg && (result[cont].GetType() == typeof(string)))
+                else if (!numArg && !nullArg && (result[cont].GetType() == typeof(string)))
                     result[cont] = criteria.ToString();
                 else if (result[cont].GetType() == typeof(DateTime))
                     result[cont] = dateArg ? dateTest as object
                                            : DateTime.MinValue;
+                else if (nullArg)
+                    result[cont] = null;
             }
             
             return result;
@@ -136,7 +139,7 @@ namespace System.Linq.Dynamic.BitWise
 
         private bool valCriterExpr(string extExpr)
         {
-            return Regex.IsMatch(extExpr, @"^[0-9].*(|:|>[0-9]*)::.*[A-Za-z0-9.-/](|&|=|&=|\+|&+|-|&-|=\+|=\-)$");
+            return Regex.IsMatch(extExpr, @"^[0-9].*(|:|>[0-9]*)::.*([A-Za-z0-9.-/]|<)(|&|=|&=|\+|&+|-|&-|=\+|=\-)$");
         }
 
         private bool valPredicExpr(string extExpr)
@@ -257,7 +260,32 @@ namespace System.Linq.Dynamic.BitWise
 
         private string getDynExprCriter(string extExpr)
         {
-            return extExpr.Substring(extExpr.IndexOf("::") + 2);
+            var result = extExpr.Substring(extExpr.IndexOf("::") + 2);
+
+            return (result.EndsWith("=")) ? result : result.ToLower();
+        }
+
+        private string getInternalLogCompr(string[] objProps, string filterExpr)
+        {
+            var result = string.Empty;
+
+            if (objProps.Length % 2 == 0)
+            {
+                for (var cnt = 1; cnt < objProps.Length; cnt = cnt + 2)
+                {
+                    objProps[cnt - 1] = string.Concat(objProps[cnt - 1], getCompareToken(filterExpr));
+                    objProps[cnt] = string.Concat(objProps[cnt], filterExpr.Contains("&") ? " And " : " Or ");
+                }
+
+                result = string.Join(string.Empty, from prp in objProps
+                                                   select prp);
+
+                result = result.Substring(0, (result.Length - 4));
+            }
+            else
+                throw new InvalidInternalCombinAttribute();
+
+            return result;
         }
 
         private string getDynExprLogCompr(string[] objProps, string filterExpr)
@@ -266,9 +294,27 @@ namespace System.Linq.Dynamic.BitWise
 
             var result = string.Join(" ", from prp in objProps
                                     select string.Concat(getDynExprCompare(prp, filterExpr, idx++),
-                                                         filterExpr.Contains("&") ? " And " : " Or  "));
+                                                         filterExpr.Contains("&") ? " And " : " Or "));
             
             return result.Substring(0, (result.Length - 5));
+        }
+
+        private string getCompareToken(string filterExpr)
+        {
+            var result = string.Empty;
+
+            if (filterExpr.EndsWith("=+"))
+                result = " >= ";
+            else if (filterExpr.EndsWith("=-"))
+                result = " <= ";
+            else if (filterExpr.EndsWith("="))
+                result = " = ";
+            else if (filterExpr.EndsWith("+"))
+                result = " > ";
+            else if (filterExpr.EndsWith("-"))
+                result = " < ";
+
+            return result;
         }
 
         private string getDynExprCompare(string prp, string filterExpr, int idx)
@@ -286,7 +332,7 @@ namespace System.Linq.Dynamic.BitWise
             else if (filterExpr.EndsWith("-"))
                 result += string.Concat(" < @", idx);
             else
-                result += string.Concat(".Contains(@", idx, ") ");
+                result += string.Concat(".ToLower().Contains(@", idx, ") ");
 
             return string.Join(" ", result);
         }
@@ -294,7 +340,8 @@ namespace System.Linq.Dynamic.BitWise
         private void checkInvalidCriterAttribs(object[] dynParams, string extExpr)
         {
             decimal fake;
-            if (dynParams.Any(prm => prm is DateTime || decimal.TryParse(prm.ToString(), out fake)) 
+            if ((extExpr.Contains("null") || extExpr.Contains("<") || 
+                 dynParams.Any(prm => prm is DateTime || decimal.TryParse(prm.ToString(), out fake))) 
                 && !Regex.IsMatch(extExpr, @"(=|\+|-|=+|=-).*$"))
                 throw new InvalidCriteriaAttribute();
         }
@@ -392,7 +439,12 @@ namespace System.Linq.Dynamic.BitWise
                     childsPredic.CopyTo(propNames, (propNames.Length - childsPredic.Length));
                     childExpr = null;
 
-                    var dynLINQry = string.Concat(getDynExprLogCompr(propNames, extExpr));
+                    string dynLINQry = string.Empty;
+                    if (!extExpr.Contains("<"))
+                        dynLINQry = getDynExprLogCompr(propNames, extExpr);
+                    else
+                        dynLINQry = getInternalLogCompr(propNames, extExpr);
+
                     var dynLINQParams = setObjValCombin(propNames, objInstance.First(), dynCriteria);
 
                     checkInvalidCriterAttribs(dynLINQParams, extExpr);
