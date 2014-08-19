@@ -53,6 +53,7 @@
     <Compile Include="Classes\CustomExceptions\InvalidGroupExpression.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidCriteriaAttribute.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidCriteriaExpression.cs" />
+    <Compile Include="Classes\CustomExceptions\InvalidInternalCombinAttribute.cs" />
     <Compile Include="Classes\CustomExceptions\InvalidQueryExpression.cs" />
     <Compile Include="Helpers\Reflector.cs" />
     <Compile Include="Enumerators\EnumSerialDataType.cs" />
