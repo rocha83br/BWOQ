@@ -122,7 +122,7 @@ namespace System.Linq.Dynamic.BitWise
 
             result = listPropValues(obj, propNames);
 
-            for (var cont = 0; cont < propNames.Length - 1; cont++)
+            for (var cont = 0; cont < propNames.Length; cont++)
             {
                 if (numArg) result[cont] = Convert.ChangeType(numTest.ToString(), result[cont].GetType());
                 else if (!numArg && !nullArg && (result[cont].GetType() == typeof(string)))
@@ -268,16 +268,17 @@ namespace System.Linq.Dynamic.BitWise
         private string getInternalLogCompr(string[] objProps, string filterExpr)
         {
             var result = string.Empty;
+            var objPropRes = new string[objProps.Length];
 
             if (objProps.Length % 2 == 0)
             {
                 for (var cnt = 1; cnt < objProps.Length; cnt = cnt + 2)
                 {
-                    objProps[cnt - 1] = string.Concat(objProps[cnt - 1], getCompareToken(filterExpr));
-                    objProps[cnt] = string.Concat(objProps[cnt], filterExpr.Contains("&") ? " And " : " Or ");
+                    objPropRes[cnt - 1] = string.Concat(objProps[cnt - 1], getCompareToken(filterExpr));
+                    objPropRes[cnt] = string.Concat(objProps[cnt], filterExpr.Contains("&") ? " And " : " Or ");
                 }
 
-                result = string.Join(string.Empty, from prp in objProps
+                result = string.Join(string.Empty, from prp in objPropRes
                                                    select prp);
 
                 result = result.Substring(0, (result.Length - 4));
@@ -296,7 +297,7 @@ namespace System.Linq.Dynamic.BitWise
                                     select string.Concat(getDynExprCompare(prp, filterExpr, idx++),
                                                          filterExpr.Contains("&") ? " And " : " Or "));
             
-            return result.Substring(0, (result.Length - 5));
+            return result.Substring(0, (result.Length - 4));
         }
 
         private string getCompareToken(string filterExpr)
@@ -440,13 +441,15 @@ namespace System.Linq.Dynamic.BitWise
                     childExpr = null;
 
                     string dynLINQry = string.Empty;
+                    object[] dynLINQParams = null;
                     if (!extExpr.Contains("<"))
+                    {
+                        dynLINQParams = setObjValCombin(propNames, objInstance.First(), dynCriteria);
                         dynLINQry = getDynExprLogCompr(propNames, extExpr);
+                    }
                     else
                         dynLINQry = getInternalLogCompr(propNames, extExpr);
-
-                    var dynLINQParams = setObjValCombin(propNames, objInstance.First(), dynCriteria);
-
+                                        
                     checkInvalidCriterAttribs(dynLINQParams, extExpr);
 
                     result = DynamicQueryable.Where<T>(objInstance.OfType<T>(), dynLINQry, dynLINQParams);
