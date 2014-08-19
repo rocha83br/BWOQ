@@ -122,7 +122,7 @@ namespace System.Linq.Dynamic.BitWise
 
             result = listPropValues(obj, propNames);
 
-            for (var cont = 0; cont < propNames.Length; cont++)
+            for (var cont = 0; cont < propNames.Length - 1; cont++)
             {
                 if (numArg) result[cont] = Convert.ChangeType(numTest.ToString(), result[cont].GetType());
                 else if (!numArg && !nullArg && (result[cont].GetType() == typeof(string)))
