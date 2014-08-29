@@ -403,7 +403,8 @@ namespace System.Linq.Dynamic.BitWise
 
         private string serializeResult(IQueryable dynRes, EnumSerialDataType returnDataType)
         {
-            if (returnDataType == EnumSerialDataType.XML)
+            if ((returnDataType == EnumSerialDataType.XML)
+                || (returnDataType == EnumSerialDataType.CSV))
             {
                 List<T> result = new List<T>();
                 var xmlSerial = new XmlSerializer(typeof(List<T>));
@@ -412,9 +413,13 @@ namespace System.Linq.Dynamic.BitWise
                 foreach (var res in dynRes)
                     result.Add(cloneObjectData(res, false));
 
-                xmlSerial.Serialize(memStream, result);
-
-                return Encoding.ASCII.GetString(memStream.GetBuffer()); 
+                if (returnDataType == EnumSerialDataType.XML)
+                {
+                    xmlSerial.Serialize(memStream, result);
+                    return Encoding.ASCII.GetString(memStream.GetBuffer());
+                }
+                else
+                    return Serializer.SerializeCSV(result);
             }
             else
                 return JsonConvert.SerializeObject(dynRes);

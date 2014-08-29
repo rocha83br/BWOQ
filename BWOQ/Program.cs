@@ -58,7 +58,7 @@ namespace BWOQ
 
             var bwq = new BitWiseQuery<Person>(personList.AsQueryable());
 
-            var objList = bwq.GroupBy("16^", "64");
+            var objList = bwq.Query("13").Where("8::a", EnumSerialDataType.CSV);
         }
     }
 }

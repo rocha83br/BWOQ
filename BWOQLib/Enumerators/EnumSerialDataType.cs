@@ -8,6 +8,7 @@ namespace System.Linq.Dynamic.BitWise
     public enum EnumSerialDataType
     {
         XML = 1,
-        JSON = 2
+        JSON = 2,
+        CSV = 3
     }
 }
