@@ -580,5 +580,69 @@ namespace System.Linq.Dynamic.BitWise
         }
 
         #endregion
+
+        #region Public Methods Aliases
+
+        public IQueryable Q(string bwqExpr, bool standAlone)
+        {
+            return Query(bwqExpr, standAlone);
+        }
+
+        public BWQFilter<T> Q(string bwqExpr)
+        {
+            return Query(bwqExpr);
+        }
+
+        public string Q(string extExpr, EnumSerialDataType dataType)
+        {
+            return Query(extExpr, dataType);
+        }
+
+        public IQueryable W(string extExpr)
+        {
+            return Where(extExpr);
+        }
+
+        public BWQFilter<T> W(string extExpr, bool hasSufix)
+        {
+            return Where(extExpr, hasSufix);
+        }
+
+        public string W(string extExpr, EnumSerialDataType dataType)
+        {
+            return Where(extExpr, dataType);
+        }
+
+        public IQueryable O(string extExpr)
+        {
+            return OrderBy(extExpr);
+        }
+
+        public string O(string extExpr, EnumSerialDataType dataType)
+        {
+            return OrderBy(extExpr, dataType);
+        }
+
+        public IQueryable OD(string extExpr)
+        {
+            return OrderByDescending(extExpr);
+        }
+
+        public string OD(string extExpr, EnumSerialDataType dataType)
+        {
+            return OrderByDescending(extExpr, dataType);
+        }
+
+        public IQueryable G(string grpExpr, string _byExpr)
+        {
+            return GroupBy(grpExpr, _byExpr);
+        }
+
+        public string G(string grpExpr, string extExpr, EnumSerialDataType dataType)
+        {
+            return GroupBy(grpExpr, extExpr, dataType);
+        }
+
+        #endregion
     }
 }
