@@ -33,6 +33,7 @@ namespace System.Linq.Dynamic.BitWise
             foreach(var item in objRef)
             {
                 var resultItem = Activator.CreateInstance(itemType);
+                Reflector.InitNullComposition(resultItem);
                 Reflector.CloneObjectData(item, resultItem);
                 ((IList)result).Add(resultItem);
             }

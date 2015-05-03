@@ -11,6 +11,23 @@ namespace System.Linq.Dynamic.BitWise.Helpers
     {
         #region Public Methods
 
+        {
+            if (sourceObj != null)
+            {
+                var classType = sourceObj.GetType();
+
+                var classChildProps = classType.GetProperties().Where(prp => prp.PropertyType.IsClass
+                                                                      && prp.PropertyType.Namespace.Equals(classType.Namespace));
+
+                if (classChildProps != null)
+                {
+                    foreach (var prp in classChildProps)
+                        if (prp.GetValue(sourceObj, null) == null)
+                            prp.SetValue(sourceObj, Activator.CreateInstance(prp.PropertyType), null);
+                }
+            }
+        }
+
         public static void CloneObjectData(object source, object destination)
         {
             if (source != null)
