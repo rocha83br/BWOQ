@@ -37,43 +37,47 @@ namespace System.Linq.Dynamic.BitWise.Helpers
         public static PropertyInfo[] GetObjectProps(object source, params object[] filter)
         {
             List<PropertyInfo> result = new List<PropertyInfo>();
-            var objProps = source.GetType().GetProperties();
 
-            if (filter.Length > 0)
-                foreach (var flt in filter)
-                    if (!flt.ToString().Contains("."))
-                    {
-                        foreach (var prp in objProps)
-                            if (prp.Name.Equals(flt.ToString()))
-                                result.Add(prp);
-                    }
-                    else
-                    {
-                        var child = flt.ToString().Split('.');
-                        var childSource = source.GetType().GetProperty(child[0]);
-                        var childInstance = childSource.GetValue(source, null);
-                        if (childInstance == null)
-                            childInstance = Activator.CreateInstance(childSource.PropertyType);
-                        var childProp = childInstance.GetType().GetProperty(child[1]);
-                        if (childProp != null) result.Add(childProp);
-                    }
-            else
+            if (source != null)
             {
-                foreach (var prp in objProps)
-                    result.Add(prp);
+                var objProps = source.GetType().GetProperties();
+
+                if (filter.Length > 0)
+                    foreach (var flt in filter)
+                        if (!flt.ToString().Contains("."))
+                        {
+                            foreach (var prp in objProps)
+                                if (prp.Name.Equals(flt.ToString()))
+                                    result.Add(prp);
+                        }
+                        else
+                        {
+                            var child = flt.ToString().Split('.');
+                            var childSource = source.GetType().GetProperty(child[0]);
+                            var childInstance = childSource.GetValue(source, null);
+                            if (childInstance == null)
+                                childInstance = Activator.CreateInstance(childSource.PropertyType);
+                            var childProp = childInstance.GetType().GetProperty(child[1]);
+                            if (childProp != null) result.Add(childProp);
+                        }
+                else
+                {
+                    foreach (var prp in objProps)
+                        result.Add(prp);
+                }
+
+                if (result.Count == 0)
+                {
+                    string strFilters = string.Empty;
+                    foreach (var flt in filter)
+                        strFilters += string.Concat(flt.ToString(), ", ");
+
+                    //throw new Exception(string.Concat("Attribute(s) ", 
+                    //                    strFilters.Substring(0, strFilters.Length - 2), 
+                    //                    " not found in type ", source.GetType().Name));
+                }
             }
-
-            if (result.Count == 0)
-            {
-                string strFilters = string.Empty;
-                foreach (var flt in filter)
-                    strFilters += string.Concat(flt.ToString(), ", ");
-
-                //throw new Exception(string.Concat("Attribute(s) ", 
-                //                    strFilters.Substring(0, strFilters.Length - 2), 
-                //                    " not found in type ", source.GetType().Name));
-            }
-
+            
             return result.ToArray();
         }
 
