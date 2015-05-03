@@ -41,11 +41,29 @@ namespace System.Linq.Dynamic.BitWise.Helpers
                         if ((destination == null) && (sourceType.IsClass))
                             destination = Activator.CreateInstance(sourceType);
 
-                        if (GetObjectProps(destination, prp.Name).Length > 0)
+                        var destProp = GetObjectProps(destination, prp.Name);
+
+                        if (destProp.Length > 0)
                         {
                             if (!prp.PropertyType.Namespace.Equals(source.GetType().Namespace))
-                                GetObjectProps(destination, prp.Name)[0].SetValue(destination,
-                                                            prp.GetValue(source, null), null);
+                            {
+                                if (prp.PropertyType.Name.Equals("List`1"))
+                                {
+                                    var srcListInstance = (IList)prp.GetValue(source, null);
+                                    var dstListInstance = (IList)destProp[0].GetValue(destination, null);
+
+                                    if ((srcListInstance != null) && (dstListInstance != null))
+                                        foreach (var listItem in srcListInstance)
+                                        {
+                                            object destItem = Activator.CreateInstance(listItem.GetType());
+                                            CloneObjectData(listItem, destItem);
+                                            ((IList)dstListInstance).Add(destItem);
+                                        }
+                                }
+                                else
+                                    GetObjectProps(destination, prp.Name)[0].SetValue(destination,
+                                                                prp.GetValue(source, null), null);
+                            }
                             else
                                 CloneObjectData(prp.GetValue(source, null),
                                                 GetObjectProps(destination, prp.Name)[0]
