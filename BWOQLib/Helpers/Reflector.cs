@@ -11,6 +11,7 @@ namespace System.Linq.Dynamic.BitWise.Helpers
     {
         #region Public Methods
 
+        public static void InitNullComposition(object sourceObj)
         {
             if (sourceObj != null)
             {
