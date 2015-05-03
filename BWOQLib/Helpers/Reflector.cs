@@ -13,25 +13,35 @@ namespace System.Linq.Dynamic.BitWise.Helpers
 
         public static void CloneObjectData(object source, object destination)
         {
-            foreach (var prp in GetObjectProps(source))
-                if (prp.CanWrite)
-                    if (GetObjectProps(destination, prp.Name).Length > 0)
+            if (source != null)
+            {
+                var sourceType = source.GetType();
+
+                foreach (var prp in GetObjectProps(source))
+                    if (prp.CanWrite)
                     {
-                        if (!prp.PropertyType.Namespace.Equals(source.GetType().Namespace))
-                            GetObjectProps(destination, prp.Name)[0].SetValue(destination,
-                                                        prp.GetValue(source, null), null);
+                        if ((destination == null) && (sourceType.IsClass))
+                            destination = Activator.CreateInstance(sourceType);
+
+                        if (GetObjectProps(destination, prp.Name).Length > 0)
+                        {
+                            if (!prp.PropertyType.Namespace.Equals(source.GetType().Namespace))
+                                GetObjectProps(destination, prp.Name)[0].SetValue(destination,
+                                                            prp.GetValue(source, null), null);
+                            else
+                                CloneObjectData(prp.GetValue(source, null),
+                                                GetObjectProps(destination, prp.Name)[0]
+                                                .GetValue(destination, null));
+                        }
                         else
-                            CloneObjectData(prp.GetValue(source, null),
-                                            GetObjectProps(destination, prp.Name)[0]
-                                            .GetValue(destination, null));
+                        {
+                            var sourceTypeName = source.GetType().Name;
+                            if (sourceTypeName.StartsWith("DynamicClass") || sourceTypeName.Equals("JObject"))
+                                foreach (var child in getObjectChilds(destination))
+                                    CloneObjectData(source, child);
+                        }
                     }
-                    else
-                    {
-                        var sourceTypeName = source.GetType().Name;
-                        if (sourceTypeName.StartsWith("DynamicClass") || sourceTypeName.Equals("JObject"))
-                            foreach(var child in getObjectChilds(destination))
-                                CloneObjectData(source, child);
-                    }
+            }
         }
 
         public static PropertyInfo[] GetObjectProps(object source, params object[] filter)
@@ -77,7 +87,7 @@ namespace System.Linq.Dynamic.BitWise.Helpers
                     //                    " not found in type ", source.GetType().Name));
                 }
             }
-            
+
             return result.ToArray();
         }
 
@@ -127,7 +137,7 @@ namespace System.Linq.Dynamic.BitWise.Helpers
 
             return typedValue;
         }
-  
+
         #endregion
 
         #region Helper Methods
@@ -143,7 +153,7 @@ namespace System.Linq.Dynamic.BitWise.Helpers
             var result = new List<object>();
             var childProps = destination.GetType().GetProperties().Where(prp => prp.PropertyType.Namespace.Equals(destination.GetType().Namespace));
 
-            foreach(var child in childProps)
+            foreach (var child in childProps)
                 result.Add(child.GetValue(destination, null));
 
             return result.ToArray();
