@@ -59,9 +59,18 @@ namespace System.Linq.Dynamic.BitWise.Helpers
                     foreach (var hedCol in headerColumns)
                     {
                         var hedProp = objectType.GetProperty(hedCol);
-                        var colValue = valueCols[counter++];
-                        var typedValue = Reflector.GetTypedValue(hedProp.PropertyType, colValue);
-                        hedProp.SetValue(resultItem, typedValue, null);
+
+                        if (hedProp != null)
+                        {
+                            if (counter > valueCols.Length)
+                                throw new InvalidDataException(string.Concat("Invalid line data, ref.: ", result.Count));
+
+                            var colValue = valueCols[counter];
+                            var typedValue = Reflector.GetTypedValue(hedProp.PropertyType, colValue);
+                            hedProp.SetValue(resultItem, typedValue, null);
+                        }
+
+                        counter++;
                     }
                     result.Add(resultItem);
                 }
