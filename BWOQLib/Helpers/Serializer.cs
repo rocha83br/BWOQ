@@ -62,7 +62,7 @@ namespace System.Linq.Dynamic.BitWise.Helpers
 
                         if (hedProp != null)
                         {
-                            if (counter > valueCols.Length)
+                            if (counter >= valueCols.Length)
                                 throw new InvalidDataException(string.Concat("Invalid line data, ref.: ", result.Count));
 
                             var colValue = valueCols[counter];
